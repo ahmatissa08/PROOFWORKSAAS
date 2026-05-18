@@ -7,6 +7,16 @@
 @endsection
 
 @section('content')
+@php
+  $bySource = $report->entries->groupBy('source');
+  $githubEntries = $bySource->get('github', collect());
+  $githubCommits = $githubEntries->where('type', 'commit')->count();
+  $githubPullRequests = $githubEntries->where('type', 'pull_request')->count();
+  $githubRepositories = $report->project?->integrations
+    ? $report->project->integrations->where('provider', 'github')->where('active', true)->pluck('resource_name')->filter()->unique()->values()
+    : collect();
+@endphp
+
 <div class="page-header">
   <div>
     <h1 class="page-title">{{ $report->title }}</h1>
@@ -39,7 +49,43 @@
     </div>
     @endif
 
-    @php $bySource = $report->entries->groupBy('source'); @endphp
+    @if($githubRepositories->isNotEmpty())
+    <div class="card" style="margin-bottom:1.2rem">
+      <div class="card-header">
+        <div class="card-title">GitHub activity detected</div>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.9rem;margin-bottom:1rem">
+          <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:.9rem 1rem">
+            <div style="font-family:var(--mono);font-size:.58rem;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase">Commits</div>
+            <div style="font-size:1.35rem;font-weight:700;color:var(--ink);margin-top:.25rem">{{ $githubCommits }}</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:.9rem 1rem">
+            <div style="font-family:var(--mono);font-size:.58rem;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase">Pull requests</div>
+            <div style="font-size:1.35rem;font-weight:700;color:var(--ink);margin-top:.25rem">{{ $githubPullRequests }}</div>
+          </div>
+        </div>
+
+        <div style="font-family:var(--mono);font-size:.58rem;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.45rem">Repository used</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.45rem">
+          @foreach($githubRepositories as $repository)
+          <span style="background:var(--bg);border:1px solid var(--border2);border-radius:999px;padding:.35rem .65rem;font-family:var(--mono);font-size:.62rem;color:var(--ink2)">
+            {{ $repository }}
+          </span>
+          @endforeach
+        </div>
+
+        @if($githubEntries->isEmpty())
+        <div style="margin-top:1rem;background:rgba(232,92,58,.06);border:1px solid rgba(232,92,58,.18);border-radius:8px;padding:.85rem 1rem;color:var(--ink2)">
+          <div style="font-size:.82rem;font-weight:600;color:var(--coral);margin-bottom:.2rem">No GitHub activity found for this period</div>
+          <div style="font-size:.76rem;color:var(--ink3);line-height:1.55">
+            The repository is connected, but no commits or merged pull requests were detected between {{ $report->period_start->format('M d, Y') }} and {{ $report->period_end->format('M d, Y') }}.
+          </div>
+        </div>
+        @endif
+      </div>
+    </div>
+    @endif
 
     @forelse($bySource as $source => $entries)
     @php

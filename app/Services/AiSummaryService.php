@@ -11,6 +11,7 @@ class AiSummaryService
     public function summarize(Report $report): string
     {
         $apiKey = config('proofwork.anthropic_api_key');
+
         if (!$apiKey) {
             return $this->fallbackSummary($report);
         }
@@ -19,13 +20,13 @@ class AiSummaryService
         $entries = $report->entries;
 
         if ($entries->isEmpty()) {
-            return "No activity recorded for this period.";
+            return 'No activity recorded for this period.';
         }
 
-        // Build context string
-        $context = $entries->map(function ($e) {
-            return "[{$e->source}] {$e->type}: {$e->title}" .
-                ($e->description ? " — {$e->description}" : '');
+        // Build a concise activity context for the summarizer.
+        $context = $entries->map(function ($entry) {
+            return "[{$entry->source}] {$entry->type}: {$entry->title}"
+                . ($entry->description ? " - {$entry->description}" : '');
         })->join("\n");
 
         $prompt = "You are writing a weekly proof-of-work summary for a freelancer to send to their client.
@@ -38,18 +39,18 @@ Activity log:
 Write only the summary, nothing else.";
 
         try {
-            $res = Http::withHeaders([
-                'x-api-key'         => $apiKey,
+            $response = Http::withHeaders([
+                'x-api-key' => $apiKey,
                 'anthropic-version' => '2023-06-01',
-                'Content-Type'      => 'application/json',
+                'Content-Type' => 'application/json',
             ])->post('https://api.anthropic.com/v1/messages', [
-                'model'      => 'claude-haiku-4-5-20251001',
+                'model' => 'claude-haiku-4-5-20251001',
                 'max_tokens' => 300,
-                'messages'   => [['role' => 'user', 'content' => $prompt]],
+                'messages' => [['role' => 'user', 'content' => $prompt]],
             ]);
 
-            if ($res->successful()) {
-                return $res->json('content.0.text', $this->fallbackSummary($report));
+            if ($response->successful()) {
+                return $response->json('content.0.text', $this->fallbackSummary($report));
             }
         } catch (\Throwable $e) {
             Log::error('AI summary error: ' . $e->getMessage());
@@ -62,18 +63,21 @@ Write only the summary, nothing else.";
     {
         $report->loadMissing('entries');
         $counts = $report->entries->groupBy('source')->map->count();
-        $parts  = [];
+        $parts = [];
 
         foreach ($counts as $source => $count) {
-            $parts[] = match($source) {
-                'github'          => "{$count} GitHub " . ($count > 1 ? 'activities' : 'activity'),
-                'linear'          => "{$count} task" . ($count > 1 ? 's' : '') . " completed",
-                'google_calendar' => "{$count} meeting" . ($count > 1 ? 's' : '') . " logged",
-                default           => "{$count} " . $source . " " . ($count > 1 ? 'entries' : 'entry'),
+            $parts[] = match ($source) {
+                'github' => "{$count} GitHub " . ($count > 1 ? 'activities' : 'activity'),
+                'linear' => "{$count} task" . ($count > 1 ? 's' : '') . ' completed',
+                'google_calendar' => "{$count} meeting" . ($count > 1 ? 's' : '') . ' logged',
+                default => "{$count} {$source} " . ($count > 1 ? 'entries' : 'entry'),
             };
         }
 
-        if (empty($parts)) return "No activity recorded for this period.";
+        if (empty($parts)) {
+            return 'No activity recorded for this period.';
+        }
+
         return ucfirst(implode(', ', $parts)) . ' during this period.';
     }
 }

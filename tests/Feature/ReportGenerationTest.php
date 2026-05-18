@@ -350,4 +350,198 @@ class ReportGenerationTest extends TestCase
             'title' => 'Repo two commit',
         ]);
     }
+
+    public function test_report_generation_includes_github_activity_from_the_end_date(): void
+    {
+        $todayActivity = now()->setTime(15, 45, 0);
+
+        Http::fake([
+            'https://api.github.com/repos/owner/end-date-repo/commits*' => Http::response([
+                [
+                    'sha' => 'enddate123456',
+                    'html_url' => 'https://github.com/owner/end-date-repo/commit/enddate1',
+                    'commit' => [
+                        'message' => 'Ship end of day fix',
+                        'author' => [
+                            'name' => 'Dev Late',
+                            'date' => $todayActivity->toIso8601String(),
+                        ],
+                        'committer' => [
+                            'name' => 'Dev Late',
+                            'date' => $todayActivity->toIso8601String(),
+                        ],
+                    ],
+                ],
+            ], 200),
+            'https://api.github.com/repos/owner/end-date-repo/pulls*' => Http::response([], 200),
+        ]);
+
+        $user = User::create([
+            'name' => 'End Date User',
+            'email' => 'end-date@example.com',
+            'password' => Hash::make('password123'),
+            'plan' => 'free',
+        ]);
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        $client = Client::create([
+            'user_id' => $user->id,
+            'name' => 'End Date Client',
+        ]);
+
+        $project = Project::create([
+            'user_id' => $user->id,
+            'client_id' => $client->id,
+            'name' => 'End Date Project',
+            'color' => '#e8a325',
+            'status' => 'active',
+            'report_frequency' => 'weekly',
+            'report_day' => 'friday',
+        ]);
+
+        Integration::create([
+            'user_id' => $user->id,
+            'project_id' => $project->id,
+            'provider' => 'github',
+            'provider_account_id' => 'github-user-1',
+            'provider_account_name' => 'GitHub User',
+            'resource_id' => '44',
+            'resource_name' => 'owner/end-date-repo',
+            'access_token' => 'token-123',
+            'active' => true,
+        ]);
+
+        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService {
+            public function summarize(Report $report): string
+            {
+                return 'End date summary.';
+            }
+        });
+
+        $response = $this->actingAs($user)->post(route('reports.generate', $project), [
+            'period_start' => now()->subDays(2)->format('Y-m-d'),
+            'period_end' => now()->format('Y-m-d'),
+        ]);
+
+        $report = Report::where('project_id', $project->id)->latest('id')->firstOrFail();
+
+        $response->assertRedirect(route('reports.show', $report));
+        $this->assertDatabaseHas('report_entries', [
+            'report_id' => $report->id,
+            'source' => 'github',
+            'title' => 'Ship end of day fix',
+        ]);
+    }
+
+    public function test_report_generation_fetches_multiple_github_pages(): void
+    {
+        Http::fake(function ($request) {
+            if (str_starts_with($request->url(), 'https://api.github.com/repos/owner/paginated-repo/commits')) {
+                $page = (int) data_get($request->data(), 'page', 1);
+
+                if ($page === 1) {
+                    return Http::response(array_map(
+                        fn (int $index) => [
+                            'sha' => 'page1-' . $index,
+                            'html_url' => "https://github.com/owner/paginated-repo/commit/page1-{$index}",
+                            'commit' => [
+                                'message' => "Page one commit {$index}",
+                                'author' => [
+                                    'name' => 'Dev Page One',
+                                    'date' => now()->subDay()->toIso8601String(),
+                                ],
+                                'committer' => [
+                                    'name' => 'Dev Page One',
+                                    'date' => now()->subDay()->toIso8601String(),
+                                ],
+                            ],
+                        ],
+                        range(1, 100)
+                    ), 200);
+                }
+
+                if ($page === 2) {
+                    return Http::response([
+                        [
+                            'sha' => 'page2-special',
+                            'html_url' => 'https://github.com/owner/paginated-repo/commit/page2-special',
+                            'commit' => [
+                                'message' => 'Page two commit',
+                                'author' => [
+                                    'name' => 'Dev Page Two',
+                                    'date' => now()->subDay()->toIso8601String(),
+                                ],
+                                'committer' => [
+                                    'name' => 'Dev Page Two',
+                                    'date' => now()->subDay()->toIso8601String(),
+                                ],
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                return Http::response([], 200);
+            }
+
+            if (str_starts_with($request->url(), 'https://api.github.com/repos/owner/paginated-repo/pulls')) {
+                return Http::response([], 200);
+            }
+
+            return Http::response([], 404);
+        });
+
+        $user = User::create([
+            'name' => 'Paginated Repo User',
+            'email' => 'paginated@example.com',
+            'password' => Hash::make('password123'),
+            'plan' => 'free',
+        ]);
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        $client = Client::create([
+            'user_id' => $user->id,
+            'name' => 'Paginated Client',
+        ]);
+
+        $project = Project::create([
+            'user_id' => $user->id,
+            'client_id' => $client->id,
+            'name' => 'Paginated Project',
+            'color' => '#4a9eff',
+            'status' => 'active',
+            'report_frequency' => 'weekly',
+            'report_day' => 'friday',
+        ]);
+
+        Integration::create([
+            'user_id' => $user->id,
+            'project_id' => $project->id,
+            'provider' => 'github',
+            'provider_account_id' => 'github-user-2',
+            'provider_account_name' => 'GitHub User',
+            'resource_id' => '45',
+            'resource_name' => 'owner/paginated-repo',
+            'access_token' => 'token-456',
+            'active' => true,
+        ]);
+
+        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService {
+            public function summarize(Report $report): string
+            {
+                return 'Paginated summary.';
+            }
+        });
+
+        $this->actingAs($user)->post(route('reports.generate', $project), [
+            'period_start' => now()->subWeek()->format('Y-m-d'),
+            'period_end' => now()->format('Y-m-d'),
+        ]);
+
+        $report = Report::where('project_id', $project->id)->latest('id')->firstOrFail();
+
+        $this->assertDatabaseHas('report_entries', [
+            'report_id' => $report->id,
+            'title' => 'Page two commit',
+        ]);
+    }
 }

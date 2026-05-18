@@ -1,22 +1,22 @@
 <?php
 
 return [
-    // Admin
+    // Admin contact used in the settings support link.
     'admin_password' => env('PROOFWORK_ADMIN_PASSWORD', 'changeme'),
-    'admin_email'    => env('PROOFWORK_ADMIN_EMAIL'),
+    'admin_email' => env('PROOFWORK_ADMIN_EMAIL'),
 
-    // Anthropic Claude API for AI summaries
+    // Anthropic API key for optional AI summaries.
     'anthropic_api_key' => env('ANTHROPIC_API_KEY'),
 
-    // Stripe price IDs — set these after creating products in Stripe dashboard
+    // Stripe price IDs.
     'stripe_prices' => [
-        'pro'    => env('STRIPE_PRICE_PRO',    'price_xxx'),
+        'pro' => env('STRIPE_PRICE_PRO', 'price_xxx'),
         'agency' => env('STRIPE_PRICE_AGENCY', 'price_yyy'),
     ],
 
-    // Plausible analytics (optional)
+    // Plausible analytics (optional).
     'plausible_domain' => env('PLAUSIBLE_DOMAIN'),
 
-    // Supported integrations
+    // Supported integrations.
     'integrations' => ['github', 'google_calendar', 'linear', 'notion'],
 ];

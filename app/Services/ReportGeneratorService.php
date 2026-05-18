@@ -6,6 +6,7 @@ use App\Models\Integration;
 use App\Models\Project;
 use App\Models\Report;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -13,6 +14,9 @@ class ReportGeneratorService
 {
     public function generate(Project $project, Carbon $start, Carbon $end): Report
     {
+        $start = $start->copy()->startOfDay();
+        $end = $end->copy()->endOfDay();
+
         $report = Report::create([
             'user_id' => $project->user_id,
             'project_id' => $project->id,
@@ -52,71 +56,91 @@ class ReportGeneratorService
         $repoFullName = $integration->resource_name;
         $headers = [
             'Authorization' => "token {$integration->access_token}",
+            'Accept' => 'application/vnd.github+json',
             'User-Agent' => 'ProofWork/1.0',
         ];
 
-        $commitsRes = Http::withHeaders($headers)
-            ->get("https://api.github.com/repos/{$repoFullName}/commits", [
+        $commits = $this->fetchGitHubPages(
+            "https://api.github.com/repos/{$repoFullName}/commits",
+            $headers,
+            [
                 'since' => $start->toIso8601String(),
                 'until' => $end->toIso8601String(),
-                'per_page' => 50,
-            ]);
+                'per_page' => 100,
+            ],
+            3
+        );
 
-        if ($commitsRes->successful()) {
-            $commits = $commitsRes->json();
+        foreach ($commits->take(250) as $commit) {
+            $sha = (string) ($commit['sha'] ?? '');
 
-            foreach (array_slice($commits, 0, 20) as $commit) {
-                $message = strtok($commit['commit']['message'] ?? 'Commit', "\n");
-
-                $report->entries()->create([
-                    'source' => 'github',
-                    'type' => 'commit',
-                    'title' => $message,
-                    'source_url' => $commit['html_url'] ?? null,
-                    'source_id' => $commit['sha'] ?? null,
-                    'occurred_at' => $commit['commit']['author']['date'] ?? now(),
-                    'metadata' => [
-                        'sha' => substr($commit['sha'] ?? '', 0, 7),
-                        'author' => $commit['commit']['author']['name'] ?? '',
-                        'repo' => $repoFullName,
-                    ],
-                ]);
+            if ($sha === '') {
+                continue;
             }
+
+            $message = strtok($commit['commit']['message'] ?? 'Commit', "\n");
+            $occurredAt = $commit['commit']['committer']['date']
+                ?? $commit['commit']['author']['date']
+                ?? now();
+
+            $this->createReportEntryIfMissing($report, [
+                'source' => 'github',
+                'type' => 'commit',
+                'title' => $message,
+                'source_url' => $commit['html_url'] ?? null,
+                'source_id' => $sha,
+                'occurred_at' => $occurredAt,
+                'metadata' => [
+                    'sha' => substr($sha, 0, 7),
+                    'author' => $commit['commit']['author']['name'] ?? '',
+                    'repo' => $repoFullName,
+                ],
+            ]);
         }
 
-        $prsRes = Http::withHeaders($headers)
-            ->get("https://api.github.com/repos/{$repoFullName}/pulls", [
+        $pullRequests = $this->fetchGitHubPages(
+            "https://api.github.com/repos/{$repoFullName}/pulls",
+            $headers,
+            [
                 'state' => 'closed',
-                'per_page' => 20,
                 'sort' => 'updated',
-            ]);
+                'direction' => 'desc',
+                'per_page' => 100,
+            ],
+            3
+        );
 
-        if ($prsRes->successful()) {
-            foreach ($prsRes->json() as $pr) {
-                if (!($pr['merged_at'] ?? null)) {
-                    continue;
-                }
-
-                $mergedAt = Carbon::parse($pr['merged_at']);
-
-                if (!$mergedAt->between($start, $end)) {
-                    continue;
-                }
-
-                $report->entries()->create([
-                    'source' => 'github',
-                    'type' => 'pull_request',
-                    'title' => "PR merged: {$pr['title']}",
-                    'description' => $pr['body'] ? substr($pr['body'], 0, 200) : null,
-                    'source_url' => $pr['html_url'],
-                    'source_id' => (string) $pr['number'],
-                    'occurred_at' => $pr['merged_at'],
-                    'metadata' => [
-                        'number' => $pr['number'],
-                        'author' => $pr['user']['login'] ?? '',
-                    ],
-                ]);
+        foreach ($pullRequests as $pr) {
+            if (!($pr['merged_at'] ?? null)) {
+                continue;
             }
+
+            $mergedAt = Carbon::parse($pr['merged_at']);
+
+            if ($mergedAt->lt($start) || $mergedAt->gt($end)) {
+                continue;
+            }
+
+            $number = (string) ($pr['number'] ?? '');
+
+            if ($number === '') {
+                continue;
+            }
+
+            $this->createReportEntryIfMissing($report, [
+                'source' => 'github',
+                'type' => 'pull_request',
+                'title' => "PR merged: {$pr['title']}",
+                'description' => filled($pr['body'] ?? null) ? substr($pr['body'], 0, 200) : null,
+                'source_url' => $pr['html_url'] ?? null,
+                'source_id' => $number,
+                'occurred_at' => $pr['merged_at'],
+                'metadata' => [
+                    'number' => $pr['number'],
+                    'author' => $pr['user']['login'] ?? '',
+                    'repo' => $repoFullName,
+                ],
+            ]);
         }
     }
 
@@ -205,5 +229,47 @@ class ReportGeneratorService
                 ]);
             }
         }
+    }
+
+    private function fetchGitHubPages(string $url, array $headers, array $query, int $pages): Collection
+    {
+        $results = collect();
+
+        for ($page = 1; $page <= $pages; $page++) {
+            $response = Http::withHeaders($headers)->get($url, array_merge($query, ['page' => $page]));
+
+            if (!$response->successful()) {
+                throw new \RuntimeException('Unable to fetch GitHub activity.');
+            }
+
+            $items = collect($response->json());
+
+            if ($items->isEmpty()) {
+                break;
+            }
+
+            $results = $results->concat($items);
+
+            if ($items->count() < (int) ($query['per_page'] ?? 100)) {
+                break;
+            }
+        }
+
+        return $results->values();
+    }
+
+    private function createReportEntryIfMissing(Report $report, array $attributes): void
+    {
+        $exists = $report->entries()
+            ->where('source', $attributes['source'])
+            ->where('type', $attributes['type'])
+            ->where('source_id', $attributes['source_id'] ?? null)
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        $report->entries()->create($attributes);
     }
 }

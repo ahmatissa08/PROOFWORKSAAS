@@ -124,11 +124,18 @@
       <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
         <div>
           <div style="font-size:.85rem;font-weight:500;margin-bottom:.2rem">Delete account</div>
-          <div style="font-size:.78rem;color:var(--ink3)">Permanently delete your account and all data. Cannot be undone.</div>
+          <div style="font-size:.78rem;color:var(--ink3)">Account deletion requests are handled by support to prevent accidental data loss.</div>
         </div>
-        <button class="btn btn-danger btn-sm" onclick="alert('Please contact addimiahmat@gmail.com to delete your account.')">
-          Delete account
+        @php $supportEmail = config('proofwork.admin_email'); @endphp
+        @if($supportEmail)
+        <a href="mailto:{{ $supportEmail }}?subject={{ rawurlencode('ProofWork account deletion request') }}" class="btn btn-danger btn-sm">
+          Contact support
+        </a>
+        @else
+        <button class="btn btn-danger btn-sm" type="button" disabled title="Configure PROOFWORK_ADMIN_EMAIL to enable this action.">
+          Contact support
         </button>
+        @endif
       </div>
     </div>
   </div>

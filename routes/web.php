@@ -1,36 +1,36 @@
 <?php
 
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\SocialAuthController;
-use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\App\ClientController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\IntegrationController;
 use App\Http\Controllers\App\ProjectController;
 use App\Http\Controllers\App\ReportController;
-use App\Http\Controllers\App\ClientController;
-use App\Http\Controllers\App\IntegrationController;
 use App\Http\Controllers\App\SettingsController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Billing\BillingController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// ── Root
+// Root
 Route::get('/', function () {
     return auth()->check()
         ? redirect()->route('dashboard')
         : redirect()->route('login');
 });
 
-// ── Public report (no auth required)
+// Public report (no auth required)
 Route::get('/r/{token}', [ReportController::class, 'publicView'])->name('reports.public');
 
-// ── Stripe webhook (no auth, no CSRF)
+// Stripe webhook (no auth, no CSRF)
 Route::post('/stripe/webhook', [BillingController::class, 'webhook'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('stripe.webhook');
 
-// ── Guest only
+// Guest only
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store']);
@@ -42,16 +42,15 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
 });
 
-// ── OAuth
+// OAuth
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('social.redirect');
 Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])->name('social.callback');
 
-// ── Auth required (no verified check yet — for verify routes)
+// Auth required (no verified check yet, for verify routes)
 Route::middleware('auth')->group(function () {
-
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
-    // ── Email verification
+    // Email verification
     Route::get('/email/verify', function () {
         if (request()->user()->hasVerifiedEmail()) {
             return redirect()->route('dashboard');
@@ -62,6 +61,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
         $request->fulfill();
+
         return redirect()->route('onboarding');
     })->middleware('signed')->name('verification.verify');
 
@@ -82,9 +82,8 @@ Route::middleware('auth')->group(function () {
     })->middleware('throttle:6,1')->name('verification.send');
 });
 
-// ── App routes (auth + email verified required)
+// App routes (auth + email verified required)
 Route::middleware(['auth', 'verified'])->group(function () {
-
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/onboarding', [DashboardController::class, 'onboarding'])->name('onboarding');
 
