@@ -1,0 +1,14 @@
+node_modules
+.env
+.env.local
+dist
+build
+vendor/
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitkeep
