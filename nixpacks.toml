@@ -1,0 +1,7 @@
+[phases.setup]
+nixPkgs = ["php82", "php82Extensions.bcmath"]
+
+[phases.install]
+cmds = [
+  "composer install --no-interaction --prefer-dist --optimize-autoloader"
+]
