@@ -13,14 +13,14 @@ use App\Policies\ReportPolicy;
 use App\Services\AiSummaryService;
 use App\Services\ReportGeneratorService;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
     protected $policies = [
-        Project::class     => ProjectPolicy::class,
-        Report::class      => ReportPolicy::class,
-        Client::class      => ClientPolicy::class,
+        Project::class => ProjectPolicy::class,
+        Report::class => ReportPolicy::class,
+        Client::class => ClientPolicy::class,
         Integration::class => IntegrationPolicy::class,
     ];
 
@@ -33,5 +33,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
+        Password::defaults(fn () => Password::min(10)
+            ->letters()
+            ->mixedCase()
+            ->numbers()
+            ->symbols());
     }
 }

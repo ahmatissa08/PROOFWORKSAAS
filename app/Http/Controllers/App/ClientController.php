@@ -14,35 +14,38 @@ class ClientController extends Controller
         $clients = Auth::user()->clients()
             ->withCount(['projects', 'reports'])
             ->orderBy('name')->get();
+
         return view('app.clients.index', compact('clients'));
     }
 
     public function create()
     {
         $user = Auth::user();
-        if (!$user->canCreateClient()) {
+        if (! $user->canCreateClient()) {
             return redirect()->route('billing.plans')
                 ->with('upgrade_reason', 'You\'ve reached the client limit on the free plan.');
         }
+
         return view('app.clients.create');
     }
 
     public function store(Request $request)
     {
-        if (!Auth::user()->canCreateClient()) {
+        if (! Auth::user()->canCreateClient()) {
             return redirect()->route('billing.plans')
                 ->with('upgrade_reason', 'You\'ve reached the client limit on the free plan.');
         }
 
         $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:120'],
-            'email'        => ['nullable', 'email', 'max:255'],
-            'company'      => ['nullable', 'string', 'max:120'],
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'company' => ['nullable', 'string', 'max:120'],
             'avatar_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'notes'        => ['nullable', 'string', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $client = Auth::user()->clients()->create($validated);
+
         return redirect()->route('clients.show', $client)->with('success', 'Client added!');
     }
 
@@ -51,14 +54,16 @@ class ClientController extends Controller
         $this->authorize('view', $client);
         $client->load([
             'projects',
-            'reports' => fn($q) => $q->orderByDesc('created_at')->take(10),
+            'reports' => fn ($q) => $q->orderByDesc('created_at')->take(10),
         ]);
+
         return view('app.clients.show', compact('client'));
     }
 
     public function edit(Client $client)
     {
         $this->authorize('update', $client);
+
         return view('app.clients.edit', compact('client'));
     }
 
@@ -66,13 +71,14 @@ class ClientController extends Controller
     {
         $this->authorize('update', $client);
         $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:120'],
-            'email'        => ['nullable', 'email', 'max:255'],
-            'company'      => ['nullable', 'string', 'max:120'],
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'company' => ['nullable', 'string', 'max:120'],
             'avatar_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'notes'        => ['nullable', 'string', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
         $client->update($validated);
+
         return redirect()->route('clients.show', $client)->with('success', 'Client updated.');
     }
 
@@ -80,6 +86,7 @@ class ClientController extends Controller
     {
         $this->authorize('delete', $client);
         $client->delete();
+
         return redirect()->route('clients.index')->with('success', 'Client removed.');
     }
 }

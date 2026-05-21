@@ -4,7 +4,6 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\Integration;
-use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -104,13 +103,13 @@ class IntegrationController extends Controller
     {
         abort_unless(isset($this->providers[$provider]), 404);
 
-        if (!in_array($provider, ['github', 'google_calendar'], true)) {
+        if (! in_array($provider, ['github', 'google_calendar'], true)) {
             return back()->withErrors([
                 'integration' => "{$this->providers[$provider]['label']} is not available yet.",
             ]);
         }
 
-        if (!$this->providerIsConfigured($provider)) {
+        if (! $this->providerIsConfigured($provider)) {
             return back()->withErrors([
                 'integration' => "{$this->providers[$provider]['label']} is not configured yet.",
             ]);
@@ -166,7 +165,7 @@ class IntegrationController extends Controller
                 ->whereKey($validated['project_id'])
                 ->value('id');
 
-            if (!$projectId) {
+            if (! $projectId) {
                 return back()->withErrors([
                     'project_id' => 'Selected project is invalid.',
                 ]);
@@ -176,7 +175,7 @@ class IntegrationController extends Controller
         $repository = $this->listGitHubRepositories($integration->access_token)
             ->firstWhere('id', (string) $validated['resource_id']);
 
-        if (!$repository) {
+        if (! $repository) {
             return back()->withErrors([
                 'resource_id' => 'Selected GitHub repository is invalid or no longer accessible.',
             ]);
@@ -235,7 +234,7 @@ class IntegrationController extends Controller
 
     private function listGitHubRepositories(?string $token): Collection
     {
-        if (!$token) {
+        if (! $token) {
             return collect();
         }
 
@@ -249,7 +248,7 @@ class IntegrationController extends Controller
             'per_page' => 100,
         ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             throw new \RuntimeException('Unable to fetch GitHub repositories.');
         }
 

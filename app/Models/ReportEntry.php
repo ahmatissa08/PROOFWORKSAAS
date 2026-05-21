@@ -13,7 +13,7 @@ class ReportEntry extends Model
 
     protected $casts = [
         'occurred_at' => 'datetime',
-        'metadata'    => 'array',
+        'metadata' => 'array',
     ];
 
     public function report()
@@ -23,13 +23,13 @@ class ReportEntry extends Model
 
     public function sourceIcon(): string
     {
-        return match($this->source) {
-            'github'          => '⌥',
-            'linear'          => '◈',
-            'notion'          => '◎',
+        return match ($this->source) {
+            'github' => '⌥',
+            'linear' => '◈',
+            'notion' => '◎',
             'google_calendar' => '📅',
-            'manual'          => '✏',
-            default           => '•',
+            'manual' => '✏',
+            default => '•',
         };
     }
 }

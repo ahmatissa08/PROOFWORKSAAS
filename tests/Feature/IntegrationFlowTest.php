@@ -65,13 +65,31 @@ class IntegrationFlowTest extends TestCase
     {
         $user = $this->verifiedUser();
 
-        $socialUser = new class {
+        $socialUser = new class
+        {
             public string $token = 'token-123';
+
             public ?string $refreshToken = 'refresh-123';
-            public function getId() { return 'github-user-1'; }
-            public function getName() { return 'GitHub User'; }
-            public function getNickname() { return 'ghuser'; }
-            public function getEmail() { return 'gh@example.com'; }
+
+            public function getId()
+            {
+                return 'github-user-1';
+            }
+
+            public function getName()
+            {
+                return 'GitHub User';
+            }
+
+            public function getNickname()
+            {
+                return 'ghuser';
+            }
+
+            public function getEmail()
+            {
+                return 'gh@example.com';
+            }
         };
 
         Socialite::shouldReceive('driver->redirectUrl->user')
@@ -106,13 +124,31 @@ class IntegrationFlowTest extends TestCase
             'report_day' => 'friday',
         ]);
 
-        $socialUser = new class {
+        $socialUser = new class
+        {
             public string $token = 'token-456';
+
             public ?string $refreshToken = 'refresh-456';
-            public function getId() { return 'github-user-2'; }
-            public function getName() { return 'GitHub User 2'; }
-            public function getNickname() { return 'ghuser2'; }
-            public function getEmail() { return 'gh2@example.com'; }
+
+            public function getId()
+            {
+                return 'github-user-2';
+            }
+
+            public function getName()
+            {
+                return 'GitHub User 2';
+            }
+
+            public function getNickname()
+            {
+                return 'ghuser2';
+            }
+
+            public function getEmail()
+            {
+                return 'gh2@example.com';
+            }
         };
 
         Socialite::shouldReceive('driver->redirectUrl->user')

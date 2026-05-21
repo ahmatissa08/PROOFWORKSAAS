@@ -12,9 +12,9 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $compiledPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'proofwork-test-views';
+        $compiledPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'proofwork-test-views';
 
-        if (!is_dir($compiledPath)) {
+        if (! is_dir($compiledPath)) {
             mkdir($compiledPath, 0777, true);
         }
 

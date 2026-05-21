@@ -9,6 +9,7 @@ use App\Models\Report;
 use App\Models\User;
 use App\Services\AiSummaryService;
 use App\Services\ReportGeneratorService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -43,10 +44,11 @@ class ReportGenerationTest extends TestCase
             'report_day' => 'friday',
         ]);
 
-        $this->app->instance(ReportGeneratorService::class, new class($user, $project, $client) extends ReportGeneratorService {
+        $this->app->instance(ReportGeneratorService::class, new class($user, $project, $client) extends ReportGeneratorService
+        {
             public function __construct(private User $user, private Project $project, private Client $client) {}
 
-            public function generate(Project $project, \Carbon\Carbon $start, \Carbon\Carbon $end): Report
+            public function generate(Project $project, Carbon $start, Carbon $end): Report
             {
                 $report = Report::create([
                     'user_id' => $this->user->id,
@@ -68,7 +70,8 @@ class ReportGenerationTest extends TestCase
             }
         });
 
-        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService {
+        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService
+        {
             public function summarize(Report $report): string
             {
                 return 'Generated summary.';
@@ -204,7 +207,8 @@ class ReportGenerationTest extends TestCase
             'active' => true,
         ]);
 
-        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService {
+        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService
+        {
             public function summarize(Report $report): string
             {
                 return 'GitHub-backed summary.';
@@ -326,7 +330,8 @@ class ReportGenerationTest extends TestCase
             'active' => true,
         ]);
 
-        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService {
+        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService
+        {
             public function summarize(Report $report): string
             {
                 return 'Scoped summary.';
@@ -411,7 +416,8 @@ class ReportGenerationTest extends TestCase
             'active' => true,
         ]);
 
-        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService {
+        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService
+        {
             public function summarize(Report $report): string
             {
                 return 'End date summary.';
@@ -442,7 +448,7 @@ class ReportGenerationTest extends TestCase
                 if ($page === 1) {
                     return Http::response(array_map(
                         fn (int $index) => [
-                            'sha' => 'page1-' . $index,
+                            'sha' => 'page1-'.$index,
                             'html_url' => "https://github.com/owner/paginated-repo/commit/page1-{$index}",
                             'commit' => [
                                 'message' => "Page one commit {$index}",
@@ -525,7 +531,8 @@ class ReportGenerationTest extends TestCase
             'active' => true,
         ]);
 
-        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService {
+        $this->app->instance(AiSummaryService::class, new class extends AiSummaryService
+        {
             public function summarize(Report $report): string
             {
                 return 'Paginated summary.';

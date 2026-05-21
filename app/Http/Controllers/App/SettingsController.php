@@ -13,18 +13,20 @@ class SettingsController extends Controller
     public function index()
     {
         $user = Auth::user();
+
         return view('app.settings.index', compact('user'));
     }
 
     public function updateProfile(Request $request)
     {
-        $user      = Auth::user();
+        $user = Auth::user();
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'unique:users,email,' . $user->id],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email,'.$user->id],
             'timezone' => ['required', 'timezone'],
         ]);
         $user->update($validated);
+
         return back()->with('success', 'Profile updated.');
     }
 
@@ -32,9 +34,10 @@ class SettingsController extends Controller
     {
         $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password'         => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
         Auth::user()->update(['password' => Hash::make($request->password)]);
+
         return back()->with('success', 'Password updated.');
     }
 
@@ -43,10 +46,11 @@ class SettingsController extends Controller
         Auth::user()->update([
             'notification_preferences' => [
                 'report_generated' => $request->boolean('report_generated'),
-                'report_viewed'    => $request->boolean('report_viewed'),
-                'weekly_digest'    => $request->boolean('weekly_digest'),
+                'report_viewed' => $request->boolean('report_viewed'),
+                'weekly_digest' => $request->boolean('weekly_digest'),
             ],
         ]);
+
         return back()->with('success', 'Notification preferences saved.');
     }
 }

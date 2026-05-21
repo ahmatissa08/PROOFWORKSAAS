@@ -9,6 +9,7 @@ use App\Models\Report;
 use App\Models\ReportEntry;
 use App\Services\AiSummaryService;
 use App\Services\ReportGeneratorService;
+use App\Services\ReportPdfService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -19,8 +20,8 @@ class ReportController extends Controller
     public function __construct(
         protected ReportGeneratorService $generator,
         protected AiSummaryService $ai,
-    ) {
-    }
+        protected ReportPdfService $pdf,
+    ) {}
 
     public function index()
     {
@@ -60,8 +61,8 @@ class ReportController extends Controller
         try {
             $summary = $this->ai->summarize($report);
             $report->update(['ai_summary' => $summary]);
-        } catch (\Throwable $e) {
-            \Log::warning('AI summary failed: ' . $e->getMessage());
+        } catch (Throwable $e) {
+            \Log::warning('AI summary failed: '.$e->getMessage());
         }
 
         return redirect()->route('reports.show', $report)
@@ -75,6 +76,21 @@ class ReportController extends Controller
         $report->load(['project.integrations', 'client', 'entries']);
 
         return view('app.reports.edit', compact('report'));
+    }
+
+    /**
+     * Download report as signed PDF
+     */
+    public function downloadPdf(Report $report)
+    {
+        $this->authorize('view', $report);
+
+        $path = $this->pdf->generate($report);
+
+        return response()->download($path,
+            'proofwork-report-'.$report->id.'.pdf',
+            ['Content-Type' => 'application/pdf']
+        )->deleteFileAfterSend();
     }
 
     public function update(Request $request, Report $report)
@@ -125,7 +141,7 @@ class ReportController extends Controller
     {
         $this->authorize('update', $report);
 
-        if (!$report->client || !$report->client->email) {
+        if (! $report->client || ! $report->client->email) {
             return back()->withErrors(['send' => 'No client email found. Add a client email first.']);
         }
 

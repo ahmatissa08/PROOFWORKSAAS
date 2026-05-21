@@ -1,9 +1,12 @@
 node_modules
 .env
 .env.local
+.rnd
 dist
 build
 vendor/
+/storage/app/certificates/*
+/storage/app/pdfs/*
 /storage/logs/*
 !/storage/logs/.gitkeep
 
@@ -12,3 +15,4 @@ vendor/
 
 /storage/framework/cache/data/*
 !/storage/framework/cache/data/.gitkeep
+/storage/framework/cache/tcpdf/*

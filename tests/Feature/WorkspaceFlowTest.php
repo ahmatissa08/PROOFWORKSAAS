@@ -54,13 +54,13 @@ class WorkspaceFlowTest extends TestCase
         $this->actingAs($user)
             ->patch(route('settings.password'), [
                 'current_password' => 'password123',
-                'password' => 'newpassword123',
-                'password_confirmation' => 'newpassword123',
+                'password' => 'NewPassword123!',
+                'password_confirmation' => 'NewPassword123!',
             ])
             ->assertRedirect();
 
         $user->refresh();
-        $this->assertTrue(Hash::check('newpassword123', $user->password));
+        $this->assertTrue(Hash::check('NewPassword123!', $user->password));
 
         $this->actingAs($user)
             ->post(route('clients.store'), [

@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Integration;
 use App\Models\SocialAccount;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Laravel\Socialite\Facades\Socialite;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
 class SocialAuthController extends Controller
@@ -42,13 +42,13 @@ class SocialAuthController extends Controller
                     ->redirectUrl(route('social.callback', 'google'))
                     ->user(),
             };
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return redirect()->route('login')->withErrors(['social' => 'OAuth failed. Please try again.']);
         }
 
         $email = $socialUser->getEmail();
 
-        if (!$email) {
+        if (! $email) {
             return redirect()->route('login')->withErrors([
                 'social' => 'This provider did not return an email address. Allow email access and try again.',
             ]);
@@ -67,25 +67,26 @@ class SocialAuthController extends Controller
             // Always ensure email is verified for OAuth users
             $account->user->forceFill(['email_verified_at' => now()])->save();
             $account->update([
-                'access_token'  => $socialUser->token,
+                'access_token' => $socialUser->token,
                 'refresh_token' => $socialUser->refreshToken,
             ]);
             Auth::login($account->user);
+
             return redirect()->intended(route('dashboard'));
         }
 
         // Find user by email or create new one
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             $user = User::create([
-                'name'              => $socialUser->getName() ?? $socialUser->getNickname() ?? 'User',
-                'email'             => $email,
-                'avatar'            => $socialUser->getAvatar(),
-                'plan'              => 'free',
-                'trial_ends_at'     => Carbon::now()->addDays(14),
+                'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? 'User',
+                'email' => $email,
+                'avatar' => $socialUser->getAvatar(),
+                'plan' => 'free',
+                'trial_ends_at' => Carbon::now()->addDays(14),
                 'email_verified_at' => now(),
-                'password'          => Str::random(32),
+                'password' => Str::random(32),
             ]);
         } else {
             // Always verify email for OAuth users
@@ -94,14 +95,15 @@ class SocialAuthController extends Controller
 
         // Link social account
         SocialAccount::create([
-            'user_id'       => $user->id,
-            'provider'      => $provider,
-            'provider_id'   => $socialUser->getId(),
-            'access_token'  => $socialUser->token,
+            'user_id' => $user->id,
+            'provider' => $provider,
+            'provider_id' => $socialUser->getId(),
+            'access_token' => $socialUser->token,
             'refresh_token' => $socialUser->refreshToken,
         ]);
 
         Auth::login($user);
+
         return redirect()->intended(route('dashboard'));
     }
 
@@ -111,7 +113,7 @@ class SocialAuthController extends Controller
         $integrationProvider = session('integration_provider', $provider);
         $projectId = session('integration_project_id');
 
-        if (!$user) {
+        if (! $user) {
             session()->forget(['oauth_intent', 'integration_provider', 'integration_project_id']);
 
             return redirect()->route('login')->withErrors([
@@ -142,7 +144,7 @@ class SocialAuthController extends Controller
                     'user_id' => $user->id,
                     'provider' => $integrationProvider,
                     'project_id' => $integrationProvider === 'github' ? $projectId : null,
-                ], fn ($value, $key) => !($key === 'project_id' && $integrationProvider !== 'github'), ARRAY_FILTER_USE_BOTH),
+                ], fn ($value, $key) => ! ($key === 'project_id' && $integrationProvider !== 'github'), ARRAY_FILTER_USE_BOTH),
                 [
                     'project_id' => $projectId,
                     'provider_account_id' => $socialUser->getId(),
@@ -158,7 +160,7 @@ class SocialAuthController extends Controller
             session()->forget(['oauth_intent', 'integration_provider', 'integration_project_id']);
 
             return redirect()->route('integrations.index')->withErrors([
-                'integration' => 'Integration failed: ' . $e->getMessage(),
+                'integration' => 'Integration failed: '.$e->getMessage(),
             ]);
         }
 
@@ -172,6 +174,6 @@ class SocialAuthController extends Controller
         }
 
         return redirect()->route('integrations.index')
-            ->with('success', ucfirst(str_replace('_', ' ', $integrationProvider)) . ' connected successfully.');
+            ->with('success', ucfirst(str_replace('_', ' ', $integrationProvider)).' connected successfully.');
     }
 }

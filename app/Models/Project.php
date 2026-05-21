@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Project extends Model
 {
@@ -16,13 +16,28 @@ class Project extends Model
 
     protected $casts = [
         'auto_report' => 'boolean',
-        'auto_send'   => 'boolean',
+        'auto_send' => 'boolean',
     ];
 
-    public function user()       { return $this->belongsTo(User::class); }
-    public function client()     { return $this->belongsTo(Client::class); }
-    public function reports()    { return $this->hasMany(Report::class)->orderByDesc('period_end'); }
-    public function integrations(){ return $this->hasMany(Integration::class); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class)->orderByDesc('period_end');
+    }
+
+    public function integrations()
+    {
+        return $this->hasMany(Integration::class);
+    }
 
     public function latestReport()
     {

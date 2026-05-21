@@ -38,7 +38,7 @@ class ReportGeneratorService
                     default => null,
                 };
             } catch (\Throwable $e) {
-                Log::warning("Integration pull failed [{$integration->provider}]: " . $e->getMessage());
+                Log::warning("Integration pull failed [{$integration->provider}]: ".$e->getMessage());
             }
         }
 
@@ -49,7 +49,7 @@ class ReportGeneratorService
 
     private function pullGitHub(Report $report, Integration $integration, Carbon $start, Carbon $end): void
     {
-        if (!$integration->access_token || !$integration->resource_name) {
+        if (! $integration->access_token || ! $integration->resource_name) {
             return;
         }
 
@@ -111,7 +111,7 @@ class ReportGeneratorService
         );
 
         foreach ($pullRequests as $pr) {
-            if (!($pr['merged_at'] ?? null)) {
+            if (! ($pr['merged_at'] ?? null)) {
                 continue;
             }
 
@@ -131,7 +131,7 @@ class ReportGeneratorService
                 'source' => 'github',
                 'type' => 'pull_request',
                 'title' => "PR merged: {$pr['title']}",
-                'description' => filled($pr['body'] ?? null) ? substr($pr['body'], 0, 200) : null,
+                'description' => filled($pr['body'] ?? null) ? str($pr['body'])->limit(200, '')->toString() : null,
                 'source_url' => $pr['html_url'] ?? null,
                 'source_id' => $number,
                 'occurred_at' => $pr['merged_at'],
@@ -146,7 +146,7 @@ class ReportGeneratorService
 
     private function pullLinear(Report $report, Integration $integration, Carbon $start, Carbon $end): void
     {
-        if (!$integration->access_token) {
+        if (! $integration->access_token) {
             return;
         }
 
@@ -178,7 +178,7 @@ class ReportGeneratorService
                     'source' => 'linear',
                     'type' => 'task',
                     'title' => $issue['title'],
-                    'description' => $issue['description'] ? substr($issue['description'], 0, 200) : null,
+                    'description' => filled($issue['description'] ?? null) ? str($issue['description'])->limit(200, '')->toString() : null,
                     'source_url' => $issue['url'] ?? null,
                     'source_id' => $issue['id'],
                     'occurred_at' => $issue['completedAt'] ?? now(),
@@ -193,7 +193,7 @@ class ReportGeneratorService
 
     private function pullCalendar(Report $report, Integration $integration, Carbon $start, Carbon $end): void
     {
-        if (!$integration->access_token) {
+        if (! $integration->access_token) {
             return;
         }
 
@@ -218,7 +218,7 @@ class ReportGeneratorService
                     'source' => 'google_calendar',
                     'type' => 'meeting',
                     'title' => $event['summary'] ?? 'Meeting',
-                    'description' => $event['description'] ? substr($event['description'], 0, 200) : null,
+                    'description' => filled($event['description'] ?? null) ? str($event['description'])->limit(200, '')->toString() : null,
                     'source_url' => $event['htmlLink'] ?? null,
                     'source_id' => $event['id'],
                     'occurred_at' => $event['start']['dateTime'] ?? $event['start']['date'] ?? now(),
@@ -238,7 +238,7 @@ class ReportGeneratorService
         for ($page = 1; $page <= $pages; $page++) {
             $response = Http::withHeaders($headers)->get($url, array_merge($query, ['page' => $page]));
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new \RuntimeException('Unable to fetch GitHub activity.');
             }
 

@@ -27,14 +27,14 @@
   @csrf
   <div class="form-group">
     <label class="form-label" for="email">Email address</label>
-    <input id="email" name="email" type="email" class="form-input" value="{{ old('email') }}" placeholder="you@example.com" required autofocus>
+    <input id="email" name="email" type="email" class="form-input" value="{{ old('email') }}" placeholder="you@example.com" autocomplete="email" required autofocus>
   </div>
   <div class="form-group">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
       <label class="form-label" for="password" style="margin-bottom:0">Password</label>
       <a href="{{ route('password.request') }}" style="font-family:var(--mono);font-size:.6rem;color:var(--ink3);text-decoration:none">Forgot?</a>
     </div>
-    <input id="password" name="password" type="password" class="form-input" placeholder="Your password" required>
+    <input id="password" name="password" type="password" class="form-input" placeholder="Your password" autocomplete="current-password" required>
   </div>
   <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">
     <input type="checkbox" name="remember" id="remember" style="accent-color:var(--amber)">

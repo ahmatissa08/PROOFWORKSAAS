@@ -24,22 +24,28 @@
   @csrf
   <div class="form-group">
     <label class="form-label" for="name">Full name</label>
-    <input id="name" name="name" type="text" class="form-input" value="{{ old('name') }}" placeholder="Ahmat Issa" required autofocus>
+    <input id="name" name="name" type="text" class="form-input" value="{{ old('name') }}" placeholder="Ahmat Issa" autocomplete="name" required autofocus>
     @error('name')<span class="form-error">{{ $message }}</span>@enderror
   </div>
   <div class="form-group">
     <label class="form-label" for="email">Email address</label>
-    <input id="email" name="email" type="email" class="form-input" value="{{ old('email') }}" placeholder="you@example.com" required>
+    <input id="email" name="email" type="email" class="form-input" value="{{ old('email') }}" placeholder="you@example.com" autocomplete="email" required>
     @error('email')<span class="form-error">{{ $message }}</span>@enderror
   </div>
   <div class="form-group">
     <label class="form-label" for="password">Password</label>
-    <input id="password" name="password" type="password" class="form-input" placeholder="8+ characters" required>
+    <input id="password" name="password" type="password" class="form-input" placeholder="Strong password" autocomplete="new-password" required>
+    <div class="password-hint" aria-label="Password requirements">
+      <span>10+ characters</span>
+      <span>Upper & lower case</span>
+      <span>One number</span>
+      <span>One symbol</span>
+    </div>
     @error('password')<span class="form-error">{{ $message }}</span>@enderror
   </div>
   <div class="form-group">
     <label class="form-label" for="password_confirmation">Confirm password</label>
-    <input id="password_confirmation" name="password_confirmation" type="password" class="form-input" placeholder="Repeat password" required>
+    <input id="password_confirmation" name="password_confirmation" type="password" class="form-input" placeholder="Repeat password" autocomplete="new-password" required>
   </div>
   <button type="submit" class="btn-primary">Create account - Start free trial</button>
 </form>

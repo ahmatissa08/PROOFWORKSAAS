@@ -21,8 +21,8 @@ class AuthFlowTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'StrongPass123!',
+            'password_confirmation' => 'StrongPass123!',
         ]);
 
         $response->assertRedirect(route('verification.notice'));
@@ -31,6 +31,21 @@ class AuthFlowTest extends TestCase
         $user = User::where('email', 'test@example.com')->first();
         $this->assertNotNull($user);
         Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_user_cannot_register_with_weak_password(): void
+    {
+        $response = $this->from('/register')->post('/register', [
+            'name' => 'Weak Password',
+            'email' => 'weak@example.com',
+            'password' => '12345678',
+            'password_confirmation' => '12345678',
+        ]);
+
+        $response->assertRedirect('/register');
+        $response->assertSessionHasErrors('password');
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'weak@example.com']);
     }
 
     public function test_user_can_login_and_reach_dashboard_when_verified(): void

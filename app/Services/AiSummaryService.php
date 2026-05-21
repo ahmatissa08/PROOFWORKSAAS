@@ -12,7 +12,7 @@ class AiSummaryService
     {
         $apiKey = config('proofwork.anthropic_api_key');
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return $this->fallbackSummary($report);
         }
 
@@ -26,7 +26,7 @@ class AiSummaryService
         // Build a concise activity context for the summarizer.
         $context = $entries->map(function ($entry) {
             return "[{$entry->source}] {$entry->type}: {$entry->title}"
-                . ($entry->description ? " - {$entry->description}" : '');
+                .($entry->description ? " - {$entry->description}" : '');
         })->join("\n");
 
         $prompt = "You are writing a weekly proof-of-work summary for a freelancer to send to their client.
@@ -53,7 +53,7 @@ Write only the summary, nothing else.";
                 return $response->json('content.0.text', $this->fallbackSummary($report));
             }
         } catch (\Throwable $e) {
-            Log::error('AI summary error: ' . $e->getMessage());
+            Log::error('AI summary error: '.$e->getMessage());
         }
 
         return $this->fallbackSummary($report);
@@ -67,10 +67,10 @@ Write only the summary, nothing else.";
 
         foreach ($counts as $source => $count) {
             $parts[] = match ($source) {
-                'github' => "{$count} GitHub " . ($count > 1 ? 'activities' : 'activity'),
-                'linear' => "{$count} task" . ($count > 1 ? 's' : '') . ' completed',
-                'google_calendar' => "{$count} meeting" . ($count > 1 ? 's' : '') . ' logged',
-                default => "{$count} {$source} " . ($count > 1 ? 'entries' : 'entry'),
+                'github' => "{$count} GitHub ".($count > 1 ? 'activities' : 'activity'),
+                'linear' => "{$count} task".($count > 1 ? 's' : '').' completed',
+                'google_calendar' => "{$count} meeting".($count > 1 ? 's' : '').' logged',
+                default => "{$count} {$source} ".($count > 1 ? 'entries' : 'entry'),
             };
         }
 
@@ -78,6 +78,6 @@ Write only the summary, nothing else.";
             return 'No activity recorded for this period.';
         }
 
-        return ucfirst(implode(', ', $parts)) . ' during this period.';
+        return ucfirst(implode(', ', $parts)).' during this period.';
     }
 }

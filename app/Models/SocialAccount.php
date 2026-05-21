@@ -15,5 +15,8 @@ class SocialAccount extends Model
 
     protected $casts = ['token_expires_at' => 'datetime'];
 
-    public function user() { return $this->belongsTo(User::class); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

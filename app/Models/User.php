@@ -10,7 +10,7 @@ use Laravel\Cashier\Billable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, Billable;
+    use Billable, HasFactory, Notifiable;
 
     protected $fillable = [
         'name', 'email', 'password', 'avatar',
@@ -21,10 +21,10 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
-        'email_verified_at'         => 'datetime',
-        'trial_ends_at'             => 'datetime',
-        'password'                  => 'hashed',
-        'notification_preferences'  => 'array',
+        'email_verified_at' => 'datetime',
+        'trial_ends_at' => 'datetime',
+        'password' => 'hashed',
+        'notification_preferences' => 'array',
     ];
 
     // ── Relations
@@ -56,22 +56,24 @@ class User extends Authenticatable implements MustVerifyEmail
     // ── Plan limits
     public function planLimits(): array
     {
-        return match($this->plan) {
-            'pro'    => ['projects' => 999, 'clients' => 999, 'integrations' => 6, 'auto_send' => true],
+        return match ($this->plan) {
+            'pro' => ['projects' => 999, 'clients' => 999, 'integrations' => 6, 'auto_send' => true],
             'agency' => ['projects' => 999, 'clients' => 999, 'integrations' => 6, 'auto_send' => true, 'white_label' => true],
-            default  => ['projects' => 1,   'clients' => 1,   'integrations' => 2, 'auto_send' => false],
+            default => ['projects' => 1,   'clients' => 1,   'integrations' => 2, 'auto_send' => false],
         };
     }
 
     public function canCreateProject(): bool
     {
         $limit = $this->planLimits()['projects'];
+
         return $this->projects()->count() < $limit;
     }
 
     public function canCreateClient(): bool
     {
         $limit = $this->planLimits()['clients'];
+
         return $this->clients()->count() < $limit;
     }
 
@@ -93,6 +95,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function initials(): string
     {
         $parts = explode(' ', $this->name);
-        return strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+
+        return strtoupper(substr($parts[0], 0, 1).(isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
     }
 }

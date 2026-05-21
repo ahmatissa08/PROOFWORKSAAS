@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
+use App\Models\CustomerInvoice;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Cashier\Exceptions\IncompletePayment;
+use Stripe\Webhook;
 use Throwable;
 
 class BillingController extends Controller
@@ -30,11 +32,11 @@ class BillingController extends Controller
         $prices = config('proofwork.stripe_prices');
         $price = $prices[$request->plan] ?? null;
 
-        if (!$price) {
+        if (! $price) {
             abort(400, 'Invalid plan.');
         }
 
-        if (!$this->stripeIsConfigured()) {
+        if (! $this->stripeIsConfigured()) {
             return back()->withErrors([
                 'billing' => 'Stripe is not configured yet. Add valid Stripe keys and prices before checkout.',
             ]);
@@ -45,7 +47,7 @@ class BillingController extends Controller
                 ->trialDays(14)
                 ->allowPromotionCodes()
                 ->checkout([
-                    'success_url' => route('billing.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                    'success_url' => route('billing.success').'?session_id={CHECKOUT_SESSION_ID}',
                     'cancel_url' => route('billing.plans'),
                     'metadata' => ['plan' => $request->plan],
                 ]);
@@ -92,8 +94,8 @@ class BillingController extends Controller
         $secret = config('cashier.webhook.secret');
 
         try {
-            $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $secret);
-        } catch (\Throwable $e) {
+            $event = Webhook::constructEvent($payload, $sigHeader, $secret);
+        } catch (Throwable $e) {
             return response('Webhook signature verification failed.', 400);
         }
 
@@ -111,7 +113,7 @@ class BillingController extends Controller
     {
         $user = User::where('stripe_id', $subscription->customer)->first();
 
-        if (!$user) {
+        if (! $user) {
             return;
         }
 
@@ -137,11 +139,11 @@ class BillingController extends Controller
     {
         $user = User::where('stripe_id', $invoice->customer)->first();
 
-        if (!$user) {
+        if (! $user) {
             return;
         }
 
-        \App\Models\CustomerInvoice::updateOrCreate(
+        CustomerInvoice::updateOrCreate(
             ['stripe_invoice_id' => $invoice->id],
             [
                 'user_id' => $user->id,
@@ -160,6 +162,6 @@ class BillingController extends Controller
         $secret = (string) config('cashier.secret');
         $prices = array_filter((array) config('proofwork.stripe_prices'));
 
-        return $secret !== '' && !str_contains($secret, 'xxx') && count($prices) >= 2;
+        return $secret !== '' && ! str_contains($secret, 'xxx') && count($prices) >= 2;
     }
 }

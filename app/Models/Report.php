@@ -14,11 +14,11 @@ class Report extends Model
     ];
 
     protected $casts = [
-        'period_start'  => 'date',
-        'period_end'    => 'date',
+        'period_start' => 'date',
+        'period_end' => 'date',
         'share_enabled' => 'boolean',
-        'shared_at'     => 'datetime',
-        'sent_at'       => 'datetime',
+        'shared_at' => 'datetime',
+        'sent_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -26,7 +26,7 @@ class Report extends Model
         parent::boot();
 
         static::creating(function ($report) {
-            if (!$report->share_token) {
+            if (! $report->share_token) {
                 $report->share_token = Str::random(32);
             }
         });
@@ -74,7 +74,7 @@ class Report extends Model
 
     public function periodLabel(): string
     {
-        return $this->period_start->format('M d') . ' - ' . $this->period_end->format('M d, Y');
+        return $this->period_start->format('M d').' - '.$this->period_end->format('M d, Y');
     }
 
     public function entriesBySource(): array

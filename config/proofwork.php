@@ -17,6 +17,14 @@ return [
     // Plausible analytics (optional).
     'plausible_domain' => env('PLAUSIBLE_DOMAIN'),
 
+    // PDF digital signature certificate. In production, point these to a real
+    // certificate/private key pair stored outside the public web root.
+    'pdf_signature' => [
+        'certificate_path' => env('PROOFWORK_PDF_CERTIFICATE_PATH'),
+        'private_key_path' => env('PROOFWORK_PDF_PRIVATE_KEY_PATH'),
+        'private_key_password' => env('PROOFWORK_PDF_PRIVATE_KEY_PASSWORD', ''),
+    ],
+
     // Supported integrations.
     'integrations' => ['github', 'google_calendar', 'linear', 'notion'],
 ];
