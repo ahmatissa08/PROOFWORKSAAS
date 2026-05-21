@@ -1,5 +1,10 @@
 FROM dunglas/frankenphp:1-php8.2
 
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    zip
+
 RUN install-php-extensions \
     bcmath \
     pdo_mysql \
@@ -11,7 +16,8 @@ RUN install-php-extensions \
     tokenizer \
     xml \
     ctype \
-    session
+    session \
+    zip
 
 WORKDIR /app
 
@@ -19,9 +25,12 @@ COPY . .
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
 RUN php artisan config:clear || true
+RUN php artisan cache:clear || true
 RUN php artisan route:clear || true
 RUN php artisan view:clear || true
 
