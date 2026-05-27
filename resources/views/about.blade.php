@@ -1,221 +1,137 @@
-@extends('layouts.guest')
-@section('title', 'About — ProofWork')
-
-@push('styles')
-<style>
-:root{--bg:#0c0c0e;--surface:#131316;--surface2:#18181c;--border:#242428;--border2:#2e2e34;--ink:#f2f0eb;--ink2:#a09e9a;--ink3:#5a5855;--amber:#e8a325;--coral:#e85c3a;--mono:'Geist Mono',monospace;--sans:'Geist',sans-serif;--serif:'Instrument Serif',serif}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 2.5rem;border-bottom:1px solid var(--border);background:rgba(12,12,14,.9);backdrop-filter:blur(20px)}
-.logo{font-family:var(--serif);font-size:1.25rem;font-style:italic;color:var(--ink);text-decoration:none}
-.logo-word{font-family:var(--sans);font-style:normal;font-weight:300;font-size:1.2rem;letter-spacing:-.02em}
-.nav-right{display:flex;gap:.6rem;align-items:center}
-.nav-link{font-size:.8rem;color:var(--ink3);text-decoration:none;padding:.45rem .85rem;border-radius:4px;transition:color .2s,background .2s}
-.nav-link:hover{color:var(--ink);background:rgba(255,255,255,.04)}
-.nav-cta{background:var(--amber);color:#000;font-weight:600;font-size:.78rem;padding:.5rem 1.1rem;border-radius:4px;text-decoration:none;transition:opacity .15s}
-.nav-cta:hover{opacity:.88}
-
-.page-wrap{max-width:720px;margin:0 auto;padding:8rem 2.5rem 6rem}
-
-/* HERO */
-.about-hero{margin-bottom:4rem}
-.about-eyebrow{font-family:var(--mono);font-size:.62rem;color:var(--ink3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:1rem}
-.about-title{font-family:var(--serif);font-size:clamp(2.5rem,6vw,4rem);font-style:italic;font-weight:400;letter-spacing:-.03em;margin-bottom:1.2rem;line-height:1.05}
-.about-title em{color:var(--amber)}
-
-/* FOUNDER CARD */
-.founder-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:3rem}
-.founder-card-top{height:3px;background:linear-gradient(90deg,var(--amber),#4a9eff)}
-.founder-inner{padding:2rem;display:flex;gap:1.5rem;align-items:flex-start}
-.founder-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--amber),#f1c135);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:1.8rem;font-style:italic;color:#000;flex-shrink:0;font-weight:400}
-.founder-info{}
-.founder-name{font-size:1rem;font-weight:600;margin-bottom:.2rem}
-.founder-role{font-family:var(--mono);font-size:.65rem;color:var(--ink3);letter-spacing:.08em;margin-bottom:.8rem}
-.founder-bio{font-size:.88rem;color:var(--ink2);line-height:1.7}
-.founder-links{display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap}
-.founder-link{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.62rem;color:var(--ink3);text-decoration:none;padding:.3rem .7rem;border:1px solid var(--border2);border-radius:4px;transition:all .2s}
-.founder-link:hover{border-color:var(--amber);color:var(--amber)}
-
-/* STORY */
-.story-section{margin-bottom:3rem}
-.story-section p{font-size:.92rem;color:var(--ink2);line-height:1.8;margin-bottom:1.2rem}
-.story-section p strong{color:var(--ink)}
-.story-section h2{font-family:var(--serif);font-size:1.5rem;font-style:italic;font-weight:400;color:var(--amber);margin-bottom:1rem;margin-top:2rem}
-
-/* QUOTE */
-.pull-quote{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:1.4rem 1.8rem;margin:2rem 0}
-.pull-quote p{font-family:var(--serif);font-size:1.15rem;font-style:italic;color:var(--ink);line-height:1.65;margin:0}
-
-/* VALUES */
-.values-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:2rem 0}
-.value-item{background:var(--surface);padding:1.4rem}
-.value-icon{font-size:1.2rem;margin-bottom:.6rem}
-.value-title{font-size:.85rem;font-weight:600;margin-bottom:.3rem}
-.value-desc{font-size:.78rem;color:var(--ink3);line-height:1.55}
-
-/* CTA */
-.about-cta{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:2rem;text-align:center;margin-top:3rem}
-.about-cta h3{font-family:var(--serif);font-size:1.5rem;font-style:italic;font-weight:400;margin-bottom:.5rem}
-.about-cta p{color:var(--ink2);font-size:.88rem;margin-bottom:1.5rem}
-.btn-amber{background:var(--amber);color:#000;border:none;padding:.8rem 1.8rem;font-family:var(--sans);font-size:.85rem;font-weight:600;border-radius:4px;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity .15s;margin-right:.6rem}
-.btn-amber:hover{opacity:.88}
-.btn-ghost{background:transparent;color:var(--ink2);border:1px solid var(--border2);padding:.8rem 1.8rem;font-family:var(--sans);font-size:.85rem;border-radius:4px;text-decoration:none;display:inline-inline-block;transition:all .2s}
-.btn-ghost:hover{color:var(--ink)}
-
-footer{border-top:1px solid var(--border);padding:2rem 2.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-footer p{font-family:var(--mono);font-size:.6rem;color:var(--ink3)}
-footer a{font-family:var(--mono);font-size:.6rem;color:var(--ink3);text-decoration:none;transition:color .2s}
-footer a:hover{color:var(--amber)}
-
-@media(max-width:600px){
-  .page-wrap{padding:7rem 1.2rem 4rem}
-  nav{padding:1rem 1.2rem}
-  .founder-inner{flex-direction:column}
-  .values-grid{grid-template-columns:1fr}
-}
-</style>
-@endpush
-
-@section('content')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — ProofWork</title>
+  <meta name="description" content="ProofWork is a live SaaS product built by a solo founder in Casablanca.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0c0c0e;--surface:#111113;--border:#242428;--border2:#2e2e35;--ink:#f2f0eb;--ink2:#a09e9a;--ink3:#5a5855;--amber:#e8a325;--amber2:#f5b43a;--green:#27c93f;--mono:'Geist Mono',monospace;--sans:'Geist',sans-serif;--serif:'Instrument Serif',serif}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{-webkit-font-smoothing:antialiased}
+    body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border2)}
+    a{text-decoration:none}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:.9rem 2rem;background:rgba(12,12,14,.9);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
+    .nav-brand{display:flex;align-items:center;gap:.5rem;color:var(--ink);font-weight:600;font-size:.9rem;letter-spacing:-.02em}
+    .nav-mark{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--amber),var(--amber2));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-style:italic;font-size:.88rem;color:#0c0c0e}
+    .nav-right{display:flex;align-items:center;gap:.5rem}
+    .nav-back{font-size:.78rem;color:var(--ink3);padding:.4rem .8rem;border-radius:5px;transition:all .18s}
+    .nav-back:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+    .nav-cta{background:var(--amber);color:#000;font-size:.75rem;font-weight:700;padding:.45rem 1rem;border-radius:5px;transition:all .18s}
+    .nav-cta:hover{background:var(--amber2)}
+    .page{max-width:760px;margin:0 auto;padding:7.5rem 2rem 6rem}
+    .eyebrow{font-family:var(--mono);font-size:.6rem;color:var(--ink3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.9rem}
+    .page-title{font-family:var(--serif);font-size:clamp(2.5rem,6vw,4rem);font-weight:400;font-style:italic;letter-spacing:-.03em;line-height:1.05;margin-bottom:2.5rem}
+    .page-title em{color:var(--amber)}
+    .founder{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:3.5rem}
+    .founder-bar{height:3px;background:linear-gradient(90deg,var(--amber),#4a9eff,var(--amber2))}
+    .founder-inner{padding:2rem;display:flex;gap:1.8rem;align-items:flex-start}
+    .founder-av{width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,var(--amber),var(--amber2));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:1.9rem;font-style:italic;color:#0c0c0e;flex-shrink:0}
+    .founder-name{font-size:1rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.15rem}
+    .founder-role{font-family:var(--mono);font-size:.62rem;color:var(--ink3);letter-spacing:.06em;margin-bottom:.9rem}
+    .founder-bio{font-size:.88rem;color:var(--ink2);line-height:1.75}
+    .founder-links{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1.1rem}
+    .founder-link{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.6rem;color:var(--ink3);padding:.28rem .65rem;border:1px solid var(--border2);border-radius:4px;transition:all .18s}
+    .founder-link:hover{border-color:var(--amber);color:var(--amber)}
+    .section-title{font-family:var(--serif);font-size:1.4rem;font-style:italic;font-weight:400;color:var(--amber);margin-bottom:.9rem;letter-spacing:-.01em;margin-top:2.5rem}
+    p{font-size:.9rem;color:var(--ink2);line-height:1.8;margin-bottom:1.1rem}
+    p strong{color:var(--ink);font-weight:500}
+    .quote{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:1.3rem 1.7rem;margin:1.8rem 0}
+    .quote p{font-family:var(--serif);font-size:1.1rem;font-style:italic;color:var(--ink);line-height:1.6;margin:0}
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:2.5rem 0}
+    .stat{background:var(--surface);padding:1.3rem;text-align:center}
+    .stat-num{font-family:var(--serif);font-size:2.2rem;font-style:italic;color:var(--amber);line-height:1;display:block}
+    .stat-lbl{font-family:var(--mono);font-size:.58rem;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;margin-top:.3rem;display:block}
+    .values{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:1.5rem 0}
+    .val{background:var(--surface);padding:1.5rem}
+    .val-icon{font-size:1.2rem;margin-bottom:.5rem}
+    .val-title{font-size:.84rem;font-weight:600;margin-bottom:.3rem;letter-spacing:-.01em}
+    .val-desc{font-size:.77rem;color:var(--ink3);line-height:1.55}
+    .cta-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2.2rem;text-align:center;margin-top:3.5rem}
+    .cta-card h3{font-family:var(--serif);font-size:1.6rem;font-style:italic;font-weight:400;margin-bottom:.5rem}
+    .cta-card p{font-size:.86rem;color:var(--ink2);margin-bottom:1.5rem;max-width:44ch;margin-left:auto;margin-right:auto}
+    .btn-amber{display:inline-block;background:var(--amber);color:#000;padding:.8rem 1.8rem;border-radius:6px;font-family:var(--sans);font-size:.84rem;font-weight:700;transition:all .18s;margin-right:.5rem}
+    .btn-amber:hover{background:var(--amber2);transform:translateY(-1px)}
+    .btn-ghost{display:inline-block;background:transparent;color:var(--ink2);border:1px solid var(--border2);padding:.8rem 1.8rem;border-radius:6px;font-family:var(--sans);font-size:.84rem;transition:all .18s}
+    .btn-ghost:hover{color:var(--ink);border-color:var(--border)}
+    footer{border-top:1px solid var(--border);padding:1.8rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem}
+    footer p{font-family:var(--mono);font-size:.58rem;color:var(--ink3)}
+    .foot-links{display:flex;gap:1.5rem}
+    .foot-links a{font-family:var(--mono);font-size:.58rem;color:var(--ink3);transition:color .18s}
+    .foot-links a:hover{color:var(--amber)}
+    @media(max-width:600px){.page{padding:7rem 1.2rem 4rem}nav{padding:.8rem 1.2rem}.founder-inner{flex-direction:column}.values,.stats-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
 <nav>
-  <a href="{{ route('home') }}" class="logo">Proof<span class="logo-word">Work</span></a>
+  <a href="{{ route('home') }}" class="nav-brand"><div class="nav-mark">P</div>ProofWork</a>
   <div class="nav-right">
-    <a href="{{ route('home') }}" class="nav-link">← Home</a>
-    <a href="{{ route('home') }}#waitlist" class="nav-cta">Join waitlist</a>
+    <a href="{{ route('home') }}" class="nav-back">← Home</a>
+    <a href="{{ route('register') }}" class="nav-cta">Start for free</a>
   </div>
 </nav>
+<div class="page">
+  <div class="eyebrow">About ProofWork</div>
+  <h1 class="page-title">Built by a freelancer,<br>for <em>freelancers.</em></h1>
 
-<div class="page-wrap">
-
-  <div class="about-hero">
-    <div class="about-eyebrow">About ProofWork</div>
-    <h1 class="about-title">Built by a freelancer,<br>for <em>freelancers.</em></h1>
-  </div>
-
-  <!-- Founder -->
-  <div class="founder-card">
-    <div class="founder-card-top"></div>
+  <div class="founder">
+    <div class="founder-bar"></div>
     <div class="founder-inner">
-      <div class="founder-avatar">A</div>
-      <div class="founder-info">
+      <div class="founder-av">A</div>
+      <div>
         <div class="founder-name">Ahmat Issa</div>
-        <div class="founder-role">Founder · Student in Data Science & AI · Université Mundiapolis</div>
-        <div class="founder-bio">
-          I'm a Master's student in Data Science & AI based in Casablanca, Morocco.
-          I've been building software on the side for years — trading bots, fintech apps,
-          academic tools. ProofWork came from a real frustration I kept running into
-          while doing freelance dev work.
-        </div>
+        <div class="founder-role">Founder · M1 Data Science & AI · Université Mundiapolis, Casablanca 🇲🇦</div>
+        <div class="founder-bio">I'm a Master's student in Data Science & AI building software on the side. ProofWork was born from a real problem I hit during freelance work — a client disputed my invoice because I couldn't prove my hours. That cost me $2,400 and a relationship. I built this tool so it never happens to anyone again.</div>
         <div class="founder-links">
-          <a href="https://github.com/ahmatissa08" target="_blank" class="founder-link">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-            ahmatissa08
-          </a>
-          <a href="https://twitter.com/proofwork" target="_blank" class="founder-link">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            @proofwork
-          </a>
-          <a href="mailto:addimiahmat@gmail.com" class="founder-link">
-            ✉ addimiahmat@gmail.com
-          </a>
+          <a href="https://github.com/ahmatissa08" target="_blank" class="founder-link">⌥ ahmatissa08</a>
+          <a href="https://twitter.com/proofwork" target="_blank" class="founder-link">𝕏 @proofwork</a>
+          <a href="mailto:addimiahmat@gmail.com" class="founder-link">✉ addimiahmat@gmail.com</a>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Story -->
-  <div class="story-section">
-    <h2>Why I built this</h2>
+  <h2 class="section-title">Why I built this</h2>
+  <p>Last year I finished a two-month freelance project. When I sent the invoice, the client pushed back. <strong>"Can you actually prove you worked 80 hours?"</strong> I had GitHub commits, Notion pages, calendar events — but no way to show it clearly in a format a non-technical client could understand.</p>
+  <div class="quote"><p>"I spent a whole Friday copy-pasting screenshots into a PDF. There had to be a better way."</p></div>
+  <p>I asked other freelancers. Same story everywhere — reports written from memory, invoices disputed, 3-5 hours a week wasted on admin that still didn't protect them. So I built ProofWork.</p>
 
-    <p>
-      Last year I finished a freelance project for a client — two months of solid work.
-      When I sent the invoice, they pushed back. <strong>"Can you prove you actually worked 80 hours?"</strong>
-      I had nothing. GitHub commits, yes. Notion pages, yes. But no way to show it all
-      in one place, clearly, in a format a non-technical client could understand.
-    </p>
+  <h2 class="section-title">Where we are today</h2>
+  <p>ProofWork is <strong>live, available, and ready to use right now</strong>. No waitlist. No application process. Create a free account today, connect GitHub in one OAuth click, and your first automated report will be ready by Friday.</p>
+  <p>The product connects to your existing tools — GitHub, Linear, Notion, Google Calendar — and silently collects your activity every day. Every Friday it generates a clean, verifiable report and delivers it to your client. You do nothing after the initial setup.</p>
 
-    <div class="pull-quote">
-      <p>"I spent a whole Friday afternoon copy-pasting screenshots into a PDF. It was embarrassing. There had to be a better way."</p>
-    </div>
-
-    <p>
-      I started asking other freelancers. Same story everywhere.
-      <strong>Spreadsheets that nobody trusts. Status updates written from memory.
-      Invoices disputed because there's no paper trail.</strong>
-      Freelancers lose 3–5 hours every week just on reporting — and the reports
-      still don't convince skeptical clients.
-    </p>
-
-    <h2>The idea</h2>
-
-    <p>
-      What if your work tools already had everything needed to prove what you did?
-      GitHub has your commits. Linear has your tasks. Calendar has your meetings.
-      <strong>ProofWork just connects the dots</strong> — pulls all that activity,
-      formats it into a clean verifiable report, and sends it to your client automatically.
-      No writing. No screenshots. No "trust me".
-    </p>
-
-    <p>
-      I'm building this as a solo founder, alongside my Master's in Data Science & AI
-      in Casablanca. No VC money, no team — just a real problem I want to solve.
-    </p>
-
-    <h2>Where we are</h2>
-
-    <p>
-      ProofWork is currently in <strong>private beta</strong>.
-      The waitlist is open and growing. Everyone who signs up now gets
-      <strong style="color:var(--amber)">3 months free on the Pro plan</strong> when we launch.
-      I read every reply to every email — if you have feedback, questions, or just want to
-      talk about the product, I'm one email away.
-    </p>
+  <div class="stats-row">
+    <div class="stat"><span class="stat-num">5min</span><span class="stat-lbl">to set up</span></div>
+    <div class="stat"><span class="stat-num">0</span><span class="stat-lbl">weekly effort</span></div>
+    <div class="stat"><span class="stat-num">100%</span><span class="stat-lbl">verified data</span></div>
   </div>
 
-  <!-- Values -->
-  <div class="values-grid">
-    <div class="value-item">
-      <div class="value-icon">🔍</div>
-      <div class="value-title">Transparency first</div>
-      <div class="value-desc">Every item in a ProofWork report links to its source. No summaries invented from nothing.</div>
-    </div>
-    <div class="value-item">
-      <div class="value-icon">⚡</div>
-      <div class="value-title">Zero effort</div>
-      <div class="value-desc">If you have to do more than connect your tools once, we've failed. Reports should just happen.</div>
-    </div>
-    <div class="value-item">
-      <div class="value-icon">🔒</div>
-      <div class="value-title">Read-only access</div>
-      <div class="value-desc">We only ever request read access to your tools. We can't push code, close tasks, or write anything.</div>
-    </div>
-    <div class="value-item">
-      <div class="value-icon">🤝</div>
-      <div class="value-title">Built with users</div>
-      <div class="value-desc">Every feature on the roadmap came from a real conversation with a freelancer. Not from a product manager's spreadsheet.</div>
-    </div>
+  <h2 class="section-title">What we believe</h2>
+  <div class="values">
+    <div class="val"><div class="val-icon">🔍</div><div class="val-title">Radical transparency</div><div class="val-desc">Every item in a ProofWork report links to its original source. Nothing invented or summarized from nothing.</div></div>
+    <div class="val"><div class="val-icon">⚡</div><div class="val-title">Zero effort by default</div><div class="val-desc">If using ProofWork requires ongoing manual work, we've failed. Reports should just happen.</div></div>
+    <div class="val"><div class="val-icon">🔒</div><div class="val-title">Read-only forever</div><div class="val-desc">We only request read access. We can never push code, close issues, or write anything to your tools.</div></div>
+    <div class="val"><div class="val-icon">🤝</div><div class="val-title">Built with users</div><div class="val-desc">Every feature on the roadmap came from a real conversation with a freelancer — not a product manager's spreadsheet.</div></div>
   </div>
 
-  <!-- CTA -->
-  <div class="about-cta">
-    <h3>Want to be part of this?</h3>
-    <p>Join the waitlist — early users shape the product and get 3 months free.</p>
-    <a href="{{ route('home') }}#waitlist" class="btn-amber">Join the waitlist →</a>
-    <a href="mailto:addimiahmat@gmail.com" class="btn-ghost">Send me feedback</a>
+  <div class="cta-card">
+    <h3>Start using ProofWork today.</h3>
+    <p>Free plan available. No credit card. Your first report ready by Friday.</p>
+    <a href="{{ route('register') }}" class="btn-amber">Create free account →</a>
+    <a href="mailto:addimiahmat@gmail.com" class="btn-ghost">Get in touch</a>
   </div>
-
 </div>
-
 <footer>
-  <p>© {{ date('Y') }} ProofWork · Built solo by Ahmat Issa</p>
-  <div style="display:flex;gap:1.5rem">
+  <p>© {{ date('Y') }} ProofWork · Built solo by Ahmat Issa · Casablanca 🇲🇦</p>
+  <div class="foot-links">
     <a href="{{ route('home') }}">Home</a>
+    <a href="{{ route('contact') }}">Contact</a>
     <a href="{{ route('privacy') }}">Privacy</a>
     <a href="{{ route('terms') }}">Terms</a>
-    <a href="mailto:addimiahmat@gmail.com">Contact</a>
   </div>
 </footer>
-@endsection
+</body>
+</html>

@@ -13,6 +13,7 @@ use App\Policies\ReportPolicy;
 use App\Services\AiSummaryService;
 use App\Services\ReportGeneratorService;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
 
         Password::defaults(fn () => Password::min(10)
             ->letters()

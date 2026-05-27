@@ -27,7 +27,8 @@ class Report extends Model
 
         static::creating(function ($report) {
             if (! $report->share_token) {
-                $report->share_token = Str::random(32);
+                // Use a long, high-entropy token for public sharing.
+                $report->share_token = Str::random(64);
             }
         });
     }
@@ -57,6 +58,51 @@ class Report extends Model
         return url("/r/{$this->share_token}");
     }
 
+    /**
+     * Verification hash used in PDFs and the public report view.
+     *
+     * This intentionally covers the key fields that appear in a report:
+     * - identifying metadata
+     * - period bounds
+     * - AI summary
+     * - all entries with their visible attributes
+     */
+    public function verificationHash(): string
+    {
+        $this->loadMissing('entries');
+
+        $entryPayload = $this->entries
+            ->sortBy('id')
+            ->map(function (ReportEntry $entry) {
+                return [
+                    'id' => $entry->id,
+                    'title' => $entry->title,
+                    'source' => $entry->source,
+                    'type' => $entry->type,
+                    'description' => $entry->description,
+                    'source_url' => $entry->source_url,
+                    'occurred_at' => optional($entry->occurred_at)->toIso8601String(),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $data = [
+            'id' => $this->id,
+            'user_id' => $this->user_id,
+            'project_id' => $this->project_id,
+            'client_id' => $this->client_id,
+            'title' => $this->title,
+            'ai_summary' => $this->ai_summary,
+            'period_start' => optional($this->period_start)->toDateString(),
+            'period_end' => optional($this->period_end)->toDateString(),
+            'created_at' => optional($this->created_at)->toIso8601String(),
+            'entries' => $entryPayload,
+        ];
+
+        return hash('sha256', json_encode($data));
+    }
+
     public function isDraft(): bool
     {
         return $this->status === 'draft';
@@ -74,7 +120,15 @@ class Report extends Model
 
     public function periodLabel(): string
     {
-        return $this->period_start->format('M d').' - '.$this->period_end->format('M d, Y');
+        $start = $this->period_start instanceof \Illuminate\Support\Carbon
+            ? $this->period_start
+            : \Illuminate\Support\Carbon::parse($this->period_start);
+
+        $end = $this->period_end instanceof \Illuminate\Support\Carbon
+            ? $this->period_end
+            : \Illuminate\Support\Carbon::parse($this->period_end);
+
+        return $start->format('M d').' - '.$end->format('M d, Y');
     }
 
     public function entriesBySource(): array

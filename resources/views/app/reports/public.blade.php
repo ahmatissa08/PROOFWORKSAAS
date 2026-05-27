@@ -310,7 +310,7 @@
       <i class="ti ti-shield-check"></i>
       <span class="verify-bar-url">{{ $report->shareUrl() }}</span>
     </div>
-    <span class="verify-bar-hash">{{ $report->share_token }}</span>
+    <span class="verify-bar-hash">{{ $report->verificationHash() }}</span>
   </div>
 
 </div>

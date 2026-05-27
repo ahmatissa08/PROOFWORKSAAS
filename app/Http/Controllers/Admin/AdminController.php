@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Mail\BroadcastMail;
+use App\Models\Client;
 use App\Models\Project;
 use App\Models\Report;
-use App\Models\Client;
-use App\Mail\BroadcastMail;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
@@ -19,26 +19,26 @@ class AdminController extends Controller
     public function dashboard()
     {
         $stats = [
-            'users_total'     => User::count(),
-            'users_today'     => User::whereDate('created_at', today())->count(),
-            'users_week'      => User::where('created_at', '>=', now()->subDays(7))->count(),
-            'users_pro'       => User::where('plan', 'pro')->count(),
-            'users_agency'    => User::where('plan', 'agency')->count(),
-            'users_free'      => User::where('plan', 'free')->count(),
-            'projects_total'  => Project::count(),
-            'reports_total'   => Report::count(),
-            'reports_sent'    => Report::where('status', 'sent')->count(),
-            'clients_total'   => Client::count(),
-            'mrr'             => (User::where('plan', 'pro')->count() * 19) + (User::where('plan', 'agency')->count() * 49),
+            'users_total' => User::count(),
+            'users_today' => User::whereDate('created_at', today())->count(),
+            'users_week' => User::where('created_at', '>=', now()->subDays(7))->count(),
+            'users_pro' => User::where('plan', 'pro')->count(),
+            'users_agency' => User::where('plan', 'agency')->count(),
+            'users_free' => User::where('plan', 'free')->count(),
+            'projects_total' => Project::count(),
+            'reports_total' => Report::count(),
+            'reports_sent' => Report::where('status', 'sent')->count(),
+            'clients_total' => Client::count(),
+            'mrr' => (User::where('plan', 'pro')->count() * 19) + (User::where('plan', 'agency')->count() * 49),
         ];
 
         // Signups chart last 14 days
         $chartLabels = [];
-        $chartData   = [];
+        $chartData = [];
         for ($i = 13; $i >= 0; $i--) {
             $day = Carbon::now()->subDays($i);
             $chartLabels[] = $day->format('d M');
-            $chartData[]   = User::whereDate('created_at', $day->toDateString())->count();
+            $chartData[] = User::whereDate('created_at', $day->toDateString())->count();
         }
 
         // Recent signups
@@ -55,7 +55,7 @@ class AdminController extends Controller
 
         if ($request->filled('search')) {
             $s = $request->search;
-            $query->where(fn($q) => $q->where('name', 'like', "%$s%")->orWhere('email', 'like', "%$s%"));
+            $query->where(fn ($q) => $q->where('name', 'like', "%$s%")->orWhere('email', 'like', "%$s%"));
         }
 
         if ($request->filled('plan')) {
@@ -70,7 +70,8 @@ class AdminController extends Controller
     // ── User detail
     public function userShow(User $user)
     {
-        $user->load(['projects', 'clients', 'integrations', 'reports' => fn($q) => $q->orderByDesc('created_at')->take(10)]);
+        $user->load(['projects', 'clients', 'integrations', 'reports' => fn ($q) => $q->orderByDesc('created_at')->take(10)]);
+
         return view('admin.user-show', compact('user'));
     }
 
@@ -79,6 +80,7 @@ class AdminController extends Controller
     {
         $request->validate(['plan' => ['required', 'in:free,pro,agency']]);
         $user->update(['plan' => $request->plan]);
+
         return back()->with('success', "Plan changed to {$request->plan} for {$user->name}.");
     }
 
@@ -87,6 +89,7 @@ class AdminController extends Controller
     {
         $email = $user->email;
         $user->delete();
+
         return redirect()->route('admin.users')->with('success', "User {$email} deleted.");
     }
 
@@ -97,6 +100,7 @@ class AdminController extends Controller
             ->withCount('reports')
             ->orderByDesc('created_at')
             ->paginate(30);
+
         return view('admin.projects', compact('projects'));
     }
 
@@ -106,6 +110,7 @@ class AdminController extends Controller
         $reports = Report::with(['user', 'project', 'client'])
             ->orderByDesc('created_at')
             ->paginate(30);
+
         return view('admin.reports', compact('reports'));
     }
 
@@ -113,15 +118,16 @@ class AdminController extends Controller
     public function broadcastForm()
     {
         $count = User::count();
+
         return view('admin.broadcast', compact('count'));
     }
 
     public function broadcastSend(Request $request)
     {
         $request->validate([
-            'subject'   => ['required', 'string', 'max:200'],
-            'body'      => ['required', 'string', 'max:5000'],
-            'plan'      => ['nullable', 'in:all,free,pro,agency'],
+            'subject' => ['required', 'string', 'max:200'],
+            'body' => ['required', 'string', 'max:5000'],
+            'plan' => ['nullable', 'in:all,free,pro,agency'],
         ]);
 
         $query = User::query();
@@ -129,25 +135,25 @@ class AdminController extends Controller
             $query->where('plan', $request->plan);
         }
 
-        $users  = $query->get();
-        $sent   = 0;
+        $users = $query->get();
+        $sent = 0;
         $failed = 0;
 
         foreach ($users as $user) {
             try {
                 Mail::to($user->email)->send(new BroadcastMail(
                     broadcastSubject: $request->subject,
-                    broadcastBody:    $request->body,
-                    recipientName:    $user->name,
+                    broadcastBody: $request->body,
+                    recipientName: $user->name,
                 ));
                 $sent++;
             } catch (\Throwable $e) {
-                Log::error("Admin broadcast failed for {$user->email}: " . $e->getMessage());
+                Log::error("Admin broadcast failed for {$user->email}: ".$e->getMessage());
                 $failed++;
             }
         }
 
-        return back()->with('success', "Sent to {$sent} users." . ($failed ? " {$failed} failed." : ''));
+        return back()->with('success', "Sent to {$sent} users.".($failed ? " {$failed} failed." : ''));
     }
 
     // ── Settings / config
@@ -159,18 +165,21 @@ class AdminController extends Controller
     // ── Impersonate user (login as them)
     public function impersonate(User $user)
     {
-        session(['admin_impersonating' => auth()->id()]);
+        session(['admin_impersonating' => true]);
         auth()->login($user);
+
         return redirect()->route('dashboard')->with('info', "You are now logged in as {$user->name}.");
     }
 
-    public function stopImpersonating()
+    public function stopImpersonating(Request $request)
     {
-        $adminId = session('admin_impersonating');
-        if ($adminId) {
-            session()->forget('admin_impersonating');
-            auth()->loginUsingId($adminId);
+        if (session('admin_impersonating')) {
+            auth()->logout();
+            $request->session()->forget('admin_impersonating');
+            $request->session()->regenerate();
+            $request->session()->put('proofwork_admin', true);
         }
+
         return redirect()->route('admin.dashboard');
     }
 }

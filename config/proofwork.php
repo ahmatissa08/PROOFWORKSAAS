@@ -2,11 +2,11 @@
 
 return [
     // Admin contact used in the settings support link.
-    'admin_password' => env('PROOFWORK_ADMIN_PASSWORD', 'changeme'),
+    'admin_password' => env('PROOFWORK_ADMIN_PASSWORD'),
     'admin_email' => env('PROOFWORK_ADMIN_EMAIL'),
 
-    // Anthropic API key for optional AI summaries.
-    'anthropic_api_key' => env('ANTHROPIC_API_KEY'),
+    // OPEN API key for optional AI summaries.
+    'openai_api_key' => env('OPENAI_API_KEY'),
 
     // Stripe price IDs.
     'stripe_prices' => [

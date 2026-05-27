@@ -37,15 +37,13 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        try {
-            event(new Registered($user));
-        } catch (Throwable $e) {
-            report($e);
-
-            return redirect()
-                ->route('verification.notice')
-                ->with('warning', 'Account created, but the verification email could not be sent. Check your mail settings and try again.');
-        }
+        defer(function () use ($user) {
+            try {
+                event(new Registered($user));
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }, 'send-verification-email-'.$user->id, always: true);
 
         return redirect()->route('verification.notice');
     }

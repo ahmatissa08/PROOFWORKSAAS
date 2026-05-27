@@ -117,7 +117,7 @@ class ReportPdfService
         $pdf->SetFont('helvetica', '', 8);
         $pdf->SetTextColor(90, 88, 85);
         $pdf->SetXY(25, 218);
-        $pdf->Cell(0, 5, 'Document Hash: '.$this->generateDocumentHash($report), 0, 1, 'L');
+        $pdf->Cell(0, 5, 'Verification Hash: '.$report->verificationHash(), 0, 1, 'L');
     }
 
     /**
@@ -339,7 +339,7 @@ class ReportPdfService
         $pdf->SetXY(25, 220);
         $pdf->Cell(0, 5, 'Verification Method: SHA-256 Content Hash', 0, 1, 'L');
         $pdf->Cell(0, 5, 'Generated: '.now()->format('Y-m-d H:i:s \\U\\T\\C'), 0, 1, 'L');
-        $pdf->Cell(0, 5, 'Document Hash: '.$this->generateDocumentHash($report), 0, 1, 'L');
+        $pdf->Cell(0, 5, 'Verification Hash: '.$report->verificationHash(), 0, 1, 'L');
         $pdf->Cell(0, 5, 'Report ID: '.$report->id, 0, 1, 'L');
         $pdf->Cell(0, 5, 'Share Token: '.$report->share_token, 0, 1, 'L');
     }
@@ -387,8 +387,18 @@ class ReportPdfService
             mkdir($path, 0755, true);
         }
 
+        @chmod($path, 0755);
+
+        if (! is_writable($path)) {
+            throw new \RuntimeException("TCPDF cache directory is not writable: {$path}");
+        }
+
         if (! defined('K_PATH_CACHE')) {
             define('K_PATH_CACHE', str_replace('\\', '/', $path).'/');
+        }
+
+        if (defined('K_PATH_CACHE') && ! is_dir(K_PATH_CACHE)) {
+            mkdir(K_PATH_CACHE, 0755, true);
         }
     }
 
@@ -452,35 +462,5 @@ class ReportPdfService
         @chmod($paths['key'], 0600);
     }
 
-    /**
-     * Generate a SHA-256 hash of the report content for verification
-     */
-    private function generateDocumentHash(Report $report): string
-    {
-        $data = [
-            'id' => $report->id,
-            'title' => $report->title,
-            'user_id' => $report->user_id,
-            'project_id' => $report->project_id,
-            'period_start' => $report->period_start->toDateString(),
-            'period_end' => $report->period_end->toDateString(),
-            'created_at' => $report->created_at->toDateTimeString(),
-            'entries_count' => $report->entries->count(),
-            'entries_checksum' => $this->generateEntriesChecksum($report),
-        ];
-
-        return hash('sha256', json_encode($data));
-    }
-
-    /**
-     * Generate a checksum of all entries for integrity verification
-     */
-    private function generateEntriesChecksum(Report $report): string
-    {
-        $entries = $report->entries->map(function ($entry) {
-            return $entry->id.':'.$entry->title.':'.$entry->source.':'.$entry->type;
-        })->implode('|');
-
-        return hash('sha256', $entries);
-    }
+    // Intentionally rely on Report::verificationHash() for the verification hash
 }

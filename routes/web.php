@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\App\ClientController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\IntegrationController;
@@ -11,64 +12,92 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Billing\BillingController;
+use App\Http\Controllers\DemoController;
+use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\AdminController;
-
 
 // ═══════════════════════════════════════════════════════════════
-// PUBLIC ROUTES (no auth required)
+// PUBLIC ROUTES
 // ═══════════════════════════════════════════════════════════════
 
-// Home / Landing page
 Route::get('/', function () {
     if (Auth::check()) {
         return redirect()->route('dashboard');
     }
+
     return view('landing');
 })->name('home');
 
-// Static pages (accessible to everyone: guests AND authenticated users)
+// Static pages
 Route::view('/about', 'about')->name('about');
 Route::view('/contact', 'contact')->name('contact');
 Route::view('/privacy', 'privacy')->name('privacy');
 Route::view('/terms', 'terms')->name('terms');
+Route::view('/roadmap', 'roadmap')->name('roadmap');
+Route::view('/changelog', 'changelog')->name('changelog');
+Route::view('/security', 'security')->name('security');
 
-// Public report (no auth required)
-Route::get('/r/{token}', [ReportController::class, 'publicView'])->name('reports.public');
+// Demo
+Route::get('/demo', [DemoController::class, 'index'])->name('demo');
+Route::post('/demo/generate', [DemoController::class, 'generate'])->name('demo.generate');
+
+// Public report (no auth, lightly throttled)
+Route::get('/r/{token}', [ReportController::class, 'publicView'])
+    ->middleware('throttle:60,1')
+    ->name('reports.public');
 
 // Stripe webhook (no auth, no CSRF)
 Route::post('/stripe/webhook', [BillingController::class, 'webhook'])
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('stripe.webhook');
 
-// Contact form API (accessible to everyone)
-Route::post('/contact', function (Illuminate\Http\Request $request) {
+// Contact form
+Route::post('/contact', function (Request $request) {
     $validated = $request->validate([
-        'name'    => 'required|string|max:120',
-        'email'   => 'required|email|max:255',
+        'name' => 'required|string|max:120',
+        'email' => 'required|email|max:255',
         'subject' => 'required|string|max:100',
         'message' => 'required|string|max:5000',
         'website' => 'nullable|string|max:255',
     ]);
 
-    // Honeypot check - if website field is filled, it's probably a bot
-    if (!empty($validated['website'])) {
+    if (! empty($validated['website'])) {
         return response()->json(['message' => 'Message sent!'], 200);
     }
 
-    // TODO: Implement actual email sending or notification
-    // Example: Mail::to('addimiahmat@gmail.com')->send(new ContactFormMail($validated));
+    $to = config('proofwork.admin_email') ?: config('mail.from.address');
 
-    return response()->json([
-        'message' => 'Thank you! We will respond within 24 hours.'
-    ], 200);
+    if ($to) {
+        $bodyLines = [
+            "Name: {$validated['name']}",
+            "Email: {$validated['email']}",
+            "Subject: {$validated['subject']}",
+            "Website: ".($validated['website'] ?? '-'),
+            '',
+            $validated['message'],
+        ];
+
+        try {
+            Mail::raw(implode("\n", $bodyLines), function ($mail) use ($to, $validated) {
+                $mail->to($to)
+                    ->subject('[ProofWork contact] '.$validated['subject']);
+            });
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    return response()->json(['message' => 'Thank you! We will respond within 24 hours.'], 200);
 })->name('contact.store');
 
 // ═══════════════════════════════════════════════════════════════
-// GUEST ONLY ROUTES (not authenticated)
+// GUEST ONLY
 // ═══════════════════════════════════════════════════════════════
 
 Route::middleware('guest')->group(function () {
@@ -83,20 +112,19 @@ Route::middleware('guest')->group(function () {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// OAUTH ROUTES
+// OAUTH
 // ═══════════════════════════════════════════════════════════════
 
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('social.redirect');
 Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])->name('social.callback');
 
 // ═══════════════════════════════════════════════════════════════
-// AUTH REQUIRED (no verified check yet, for verify routes)
+// AUTH (verification routes)
 // ═══════════════════════════════════════════════════════════════
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
-    // Email verification
     Route::get('/email/verify', function () {
         if (request()->user()->hasVerifiedEmail()) {
             return redirect()->route('dashboard');
@@ -116,20 +144,22 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('dashboard');
         }
 
-        try {
-            $request->user()->sendEmailVerificationNotification();
-        } catch (Throwable $e) {
-            report($e);
+        $user = $request->user();
 
-            return back()->with('warning', 'The verification email could not be sent. Check the mail configuration and try again.');
-        }
+        defer(function () use ($user) {
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }, 'resend-verification-email-'.$user->id, always: true);
 
         return back()->with('status', 'verification-link-sent');
     })->middleware('throttle:6,1')->name('verification.send');
 });
 
 // ═══════════════════════════════════════════════════════════════
-// APP ROUTES (auth + email verified required)
+// APP (auth + verified)
 // ═══════════════════════════════════════════════════════════════
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -175,59 +205,58 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/billing/manage', [BillingController::class, 'manage'])->name('billing.manage');
 });
 
-// ── Admin panel
-// Admin login
+// ═══════════════════════════════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════════════════════════════
+
 Route::get('/admin', function () {
+    if (session('proofwork_admin')) {
+        return redirect()->route('admin.dashboard');
+    }
+
     return view('admin.login');
 })->name('admin.login');
 
-Route::post('/admin', function (Illuminate\Http\Request $request) {
+Route::post('/admin', function (Request $request) {
+    $request->validate([
+        'admin_password' => ['required', 'string', 'max:255'],
+    ]);
 
-    if ($request->admin_password === config('proofwork.admin_password')) {
-        session(['proofwork_admin' => true]);
+    $adminPassword = (string) config('proofwork.admin_password');
+    $input = (string) $request->admin_password;
+
+    $isHashed = str_starts_with($adminPassword, '$2y$');
+    $valid = $isHashed
+        ? Hash::check($input, $adminPassword)
+        : (filled($adminPassword) && hash_equals($adminPassword, $input));
+
+    if ($valid) {
+        $request->session()->regenerate();
+        $request->session()->put('proofwork_admin', true);
 
         return redirect()->route('admin.dashboard');
     }
 
-    return back()->withErrors([
-        'admin_password' => 'Invalid password'
-    ]);
+    return back()->withErrors(['admin_password' => 'Invalid password']);
+})->middleware('throttle:5,1')->name('admin.authenticate');
 
-})->name('admin.authenticate');
-Route::prefix('admin')->name('admin.')->middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {
-    Route::get('/',             [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('/users',        [AdminController::class, 'users'])->name('users');
+Route::prefix('admin')->name('admin.')->middleware([AdminMiddleware::class])->group(function () {
+    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::get('/users/{user}', [AdminController::class, 'userShow'])->name('users.show');
-    Route::post('/users/{user}/plan',        [AdminController::class, 'userChangePlan'])->name('users.plan');
-    Route::delete('/users/{user}',           [AdminController::class, 'userDelete'])->name('users.delete');
+    Route::post('/users/{user}/plan', [AdminController::class, 'userChangePlan'])->name('users.plan');
+    Route::delete('/users/{user}', [AdminController::class, 'userDelete'])->name('users.delete');
     Route::post('/users/{user}/impersonate', [AdminController::class, 'impersonate'])->name('users.impersonate');
-    Route::get('/projects',  [AdminController::class, 'projects'])->name('projects');
-    Route::get('/reports',   [AdminController::class, 'reports'])->name('reports');
+    Route::get('/projects', [AdminController::class, 'projects'])->name('projects');
+    Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
     Route::get('/broadcast', [AdminController::class, 'broadcastForm'])->name('broadcast');
-    Route::post('/broadcast',[AdminController::class, 'broadcastSend'])->name('broadcast.send');
-    Route::get('/settings',  [AdminController::class, 'settings'])->name('settings');
-    Route::post('/logout', function () {
-        session()->forget('proofwork_admin');
+    Route::post('/broadcast', [AdminController::class, 'broadcastSend'])->name('broadcast.send');
+    Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+    Route::get('/stop-impersonating', [AdminController::class, 'stopImpersonating'])->name('stop-impersonating');
+    Route::post('/logout', function (Request $request) {
+        $request->session()->forget(['proofwork_admin', 'admin_impersonating']);
+        $request->session()->regenerateToken();
+
         return redirect('/');
     })->name('logout');
 });
-
-// Admin login
-Route::get('/admin/login', function () {
-    return view('admin.login');
-})->name('admin.login');
-
-Route::post('/admin/login', function (Illuminate\Http\Request $request) {
-
-    if ($request->admin_password === 'changeme') {
-
-        session(['proofwork_admin' => true]);
-
-        return redirect('/admin');
-    }
-
-    return back()->with('error', 'Wrong password');
-
-})->name('admin.login.submit');
-
-Route::get('/admin/stop-impersonating', [AdminController::class, 'stopImpersonating'])->name('admin.stop-impersonating');
