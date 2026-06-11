@@ -35,4 +35,21 @@ class SmokeTest extends TestCase
 
         $response->assertRedirect(route('dashboard'));
     }
+
+    public function test_admin_entry_redirects_to_login_for_guests(): void
+    {
+        $response = $this->get('/admin');
+
+        $response->assertRedirect(route('admin.login'));
+        $this->get(route('admin.login'))->assertOk()->assertSee('ProofWork');
+    }
+
+    public function test_contact_page_includes_csrf_token_for_ajax_form(): void
+    {
+        $response = $this->get('/contact');
+
+        $response->assertOk();
+        $response->assertSee('name="csrf-token"', false);
+        $response->assertSee(route('contact.store'), false);
+    }
 }

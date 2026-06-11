@@ -293,7 +293,7 @@
     <div class="sidebar-logo-icon"><i class="ti ti-checkup-list"></i></div>
     <span class="sidebar-logo-text">Proof<span class="sidebar-logo-word">Work</span><sup class="sidebar-logo-badge">BETA</sup></span>
   </a>
-
+ @auth
   @php $user = auth()->user(); @endphp
 
   <span class="sidebar-plan {{ $user->plan }}">
@@ -373,6 +373,7 @@
       <i class="ti ti-chevron-right user-card-arrow"></i>
     </a>
   </div>
+    @endauth
 </aside>
 
 {{-- ─── Main ─── --}}
@@ -395,6 +396,7 @@
       </div>
     </div>
     <div class="topbar-right">
+       @auth
       @if(!$user->isPro())
       <a href="{{ route('billing.plans') }}" class="topbar-upgrade">
         <i class="ti ti-rocket"></i> Upgrade to Pro
@@ -409,6 +411,7 @@
           <i class="ti ti-logout"></i> Logout
         </button>
       </form>
+       @endauth
     </div>
   </header>
 

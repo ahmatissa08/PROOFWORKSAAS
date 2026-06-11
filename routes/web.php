@@ -214,10 +214,18 @@ Route::get('/admin', function () {
         return redirect()->route('admin.dashboard');
     }
 
+    return redirect()->route('admin.login');
+});
+
+Route::get('/admin/login', function () {
+    if (session('proofwork_admin')) {
+        return redirect()->route('admin.dashboard');
+    }
+
     return view('admin.login');
 })->name('admin.login');
 
-Route::post('/admin', function (Request $request) {
+Route::post('/admin/login', function (Request $request) {
     $request->validate([
         'admin_password' => ['required', 'string', 'max:255'],
     ]);
@@ -241,7 +249,7 @@ Route::post('/admin', function (Request $request) {
 })->middleware('throttle:5,1')->name('admin.authenticate');
 
 Route::prefix('admin')->name('admin.')->middleware([AdminMiddleware::class])->group(function () {
-    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::get('/users/{user}', [AdminController::class, 'userShow'])->name('users.show');
     Route::post('/users/{user}/plan', [AdminController::class, 'userChangePlan'])->name('users.plan');

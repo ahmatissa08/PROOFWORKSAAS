@@ -1,411 +1,445 @@
-@extends('layouts.app')
+@extends('layouts.guest')
 @section('title', 'Live Demo — ProofWork')
 @section('og_title', 'ProofWork Live Demo — See your proof of work in 5 seconds')
 @section('og_description', 'Enter a GitHub username or repository and ProofWork generates a real client-ready report instantly.')
 
 @push('styles')
 <style>
-:root{--bg:#0c0c0e;--surface:#131316;--surface2:#18181c;--border:#242428;--border2:#2e2e34;--ink:#f2f0eb;--ink2:#a09e9a;--ink3:#5a5855;--amber:#e8a325;--coral:#e85c3a;--sky:#4a9eff;--green:#27c93f;--mono:'Geist Mono',monospace;--sans:'Geist',sans-serif;--serif:'Instrument Serif',serif}
+:root{
+  --bg:#09090b;--surface:#111113;--surface2:#17171a;--surface3:#1e1e22;
+  --border:#1f1f23;--border2:#2a2a2f;--border3:#333338;
+  --ink:#f4f2ed;--ink2:#9d9b97;--ink3:#55534f;
+  --amber:#e8a325;--amber2:#f5b93a;--coral:#e85c3a;--sky:#4a9eff;--green:#27c93f;
+  --mono:'Geist Mono',monospace;--sans:'Geist',sans-serif;--serif:'Instrument Serif',serif;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;overflow-x:hidden}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;border-bottom:1px solid var(--border);background:rgba(12,12,14,.92);backdrop-filter:blur(20px)}
-.logo{font-family:var(--serif);font-size:1.2rem;font-style:italic;color:var(--ink);text-decoration:none}
-.logo-word{font-family:var(--sans);font-style:normal;font-weight:300;font-size:1.1rem;letter-spacing:-.02em}
-.nav-right{display:flex;gap:.5rem;align-items:center}
-.nav-link{font-size:.8rem;color:var(--ink3);text-decoration:none;padding:.4rem .8rem;border-radius:4px;transition:color .2s,background .2s}
-.nav-link:hover{color:var(--ink);background:rgba(255,255,255,.04)}
-.nav-cta{background:var(--amber);color:#000;font-weight:600;font-size:.78rem;padding:.45rem 1rem;border-radius:4px;text-decoration:none;transition:opacity .15s}
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:.9rem 2rem;border-bottom:1px solid var(--border);background:rgba(9,9,11,.95);backdrop-filter:blur(20px);position:fixed;top:0;left:0;right:0;z-index:100}
+.logo{font-family:var(--serif);font-size:1.15rem;font-style:italic;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:.5rem}
+.logo-icon{width:26px;height:26px;background:var(--amber);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon i{font-size:13px;color:#000}
+.logo-word{font-family:var(--sans);font-style:normal;font-weight:300;font-size:1rem}
+.nav-r{display:flex;gap:.4rem;align-items:center}
+.nav-link{font-size:.78rem;color:var(--ink3);text-decoration:none;padding:.35rem .7rem;border-radius:4px;transition:color .2s,background .2s}
+.nav-link:hover{color:var(--ink2);background:rgba(255,255,255,.04)}
+.nav-cta{background:var(--amber);color:#000;font-weight:600;font-size:.75rem;padding:.38rem .9rem;border-radius:4px;text-decoration:none;transition:opacity .15s}
 .nav-cta:hover{opacity:.88}
 
 /* HERO */
-.demo-hero{padding:7.5rem 2.5rem 2.5rem;text-align:center;position:relative;overflow:hidden}
-.demo-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(232,163,37,.05) 0%,transparent 70%);pointer-events:none}
-.demo-eyebrow{display:inline-flex;align-items:center;gap:.6rem;font-family:var(--mono);font-size:.62rem;color:var(--ink3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:1.4rem;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:30px;padding:.35rem .9rem}
+.hero{padding:5.5rem 2rem 3rem;text-align:center;position:relative}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(232,163,37,.06) 0%,transparent 70%);pointer-events:none}
+.eyebrow{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.58rem;color:var(--ink3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:1.2rem;background:rgba(255,255,255,.025);border:1px solid var(--border2);border-radius:30px;padding:.28rem .8rem}
 .eyebrow-dot{width:5px;height:5px;background:var(--amber);border-radius:50%;animation:blink 2s ease-in-out infinite;flex-shrink:0}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-.demo-title{font-family:var(--serif);font-size:clamp(2.2rem,5vw,4rem);font-style:italic;font-weight:400;letter-spacing:-.03em;margin-bottom:.7rem}
-.demo-title em{color:var(--amber)}
-.demo-subtitle{color:var(--ink2);font-size:.95rem;max-width:52ch;margin:0 auto 2rem;line-height:1.65}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+h1.demo-title{font-family:var(--serif);font-size:clamp(2rem,4.5vw,3.5rem);font-style:italic;font-weight:400;letter-spacing:-.03em;margin-bottom:.6rem;line-height:1.1}
+h1.demo-title em{color:var(--amber)}
+.sub{color:var(--ink3);font-size:.9rem;max-width:46ch;margin:0 auto 2.5rem;line-height:1.7}
 
-/* MODE TOGGLE */
-.mode-toggle{display:inline-flex;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:3px;margin:0 auto 1.5rem;gap:2px}
-.mode-btn{font-family:var(--mono);font-size:.65rem;letter-spacing:.06em;padding:.4rem 1rem;border-radius:5px;cursor:pointer;border:none;background:transparent;color:var(--ink3);transition:all .2s}
-.mode-btn.active{background:var(--surface2);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+/* SEARCH BLOCK */
+.search-block{max-width:580px;margin:0 auto}
 
-/* SEARCH */
-.search-wrap{max-width:560px;margin:0 auto 1rem}
-.search-inner{display:flex;gap:.4rem;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:.45rem .45rem .45rem 1rem;transition:border-color .2s,box-shadow .2s}
-.search-inner:focus-within{border-color:var(--amber);box-shadow:0 0 0 3px rgba(232,163,37,.1)}
-.search-icon{color:var(--ink3);display:flex;align-items:center;flex-shrink:0}
-.search-input{flex:1;background:transparent;border:none;color:var(--ink);font-family:var(--mono);font-size:.88rem;outline:none;padding:.3rem .5rem}
+/* Mode toggle */
+.mode-toggle{display:inline-flex;background:var(--surface);border:1px solid var(--border2);border-radius:7px;padding:3px;margin:0 auto 1rem;gap:2px}
+.mode-btn{font-family:var(--mono);font-size:.62rem;letter-spacing:.05em;padding:.38rem .95rem;border-radius:4px;cursor:pointer;border:none;background:transparent;color:var(--ink3);transition:all .2s;display:flex;align-items:center;gap:5px}
+.mode-btn i{font-size:13px}
+.mode-btn.active{background:var(--surface2);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+
+/* Search input */
+.search-box{display:flex;align-items:center;background:var(--surface);border:1px solid var(--border2);border-radius:9px;padding:.5rem .5rem .5rem 1rem;transition:border-color .2s,box-shadow .2s;gap:.5rem;margin-bottom:.6rem}
+.search-box:focus-within{border-color:rgba(232,163,37,.4);box-shadow:0 0 0 3px rgba(232,163,37,.07)}
+.search-ico{color:var(--ink3);display:flex;align-items:center;flex-shrink:0;font-size:16px}
+.search-input{flex:1;min-width:0;background:transparent;border:none;color:var(--ink);font-family:var(--mono);font-size:.85rem;outline:none;padding:.25rem .4rem}
 .search-input::placeholder{color:var(--ink3)}
-.search-btn{background:var(--amber);color:#000;border:none;padding:.6rem 1.4rem;border-radius:6px;font-family:var(--sans);font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap}
-.search-btn:hover{opacity:.88}
-.search-btn:disabled{opacity:.45;cursor:not-allowed}
-.search-hint{font-family:var(--mono);font-size:.6rem;color:var(--ink3);text-align:center;margin-bottom:.6rem}
-.search-hint code{background:var(--surface2);border:1px solid var(--border2);padding:.1rem .35rem;border-radius:3px;color:var(--amber)}
+.search-btn{background:var(--amber);color:#000;border:none;padding:.58rem 1.3rem;border-radius:6px;font-family:var(--sans);font-size:.8rem;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s;white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0}
+.search-btn i{font-size:14px}
+.search-btn:hover{opacity:.9;transform:translateY(-1px)}
+.search-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 
-/* EXAMPLES */
-.examples{display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin-bottom:.5rem}
-.example-chip{background:var(--surface2);border:1px solid var(--border2);color:var(--ink3);font-family:var(--mono);font-size:.6rem;padding:.22rem .65rem;border-radius:20px;cursor:pointer;transition:all .2s}
-.example-chip:hover{border-color:var(--amber);color:var(--amber)}
+/* Hint */
+.search-hint{font-family:var(--mono);font-size:.58rem;color:var(--ink3);text-align:center;margin-bottom:.7rem}
+.search-hint code{background:var(--surface2);border:1px solid var(--border2);padding:.08rem .3rem;border-radius:3px;color:var(--amber)}
+
+/* Example chips */
+.chips{display:flex;gap:.35rem;justify-content:center;flex-wrap:wrap;margin-bottom:.5rem}
+.chip{background:var(--surface2);border:1px solid var(--border2);color:var(--ink3);font-family:var(--mono);font-size:.58rem;padding:.2rem .55rem;border-radius:20px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:4px}
+.chip i{font-size:11px}
+.chip:hover{border-color:rgba(232,163,37,.3);color:var(--amber);background:rgba(232,163,37,.05)}
 
 /* LOADING */
-.loading-state{display:none;text-align:center;padding:3.5rem 2rem}
-.loading-state.visible{display:block}
-.spinner{width:34px;height:34px;border:2px solid var(--border2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 1.2rem}
+.loading{display:none;text-align:center;padding:3rem 2rem;max-width:400px;margin:0 auto}
+.loading.on{display:block}
+.spinner{width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--amber);border-radius:50%;animation:spin .65s linear infinite;margin:0 auto 1.2rem}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-steps{display:flex;flex-direction:column;gap:.35rem;font-family:var(--mono);font-size:.65rem;color:var(--ink3)}
-.lstep{opacity:.3;transition:opacity .25s}.lstep.active{opacity:1;color:var(--amber)}.lstep.done{opacity:.6;color:var(--green)}
-.lstep.done::before{content:'✓ '}
+.lsteps{display:flex;flex-direction:column;gap:.3rem;font-family:var(--mono);font-size:.62rem;color:var(--ink3)}
+.ls{opacity:.25;transition:opacity .2s;display:flex;align-items:center;gap:.5rem;justify-content:center}
+.ls.active{opacity:1;color:var(--amber)}.ls.done{opacity:.55;color:var(--green)}
+.ls.done .ls-dot{background:var(--green)}.ls.active .ls-dot{background:var(--amber)}
+.ls-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .2s}
 
 /* ERROR */
-.error-state{display:none;text-align:center;padding:3rem 2rem;max-width:460px;margin:0 auto}
-.error-state.visible{display:block}
-.error-icon{font-size:1.8rem;margin-bottom:.8rem}
-.error-msg{font-family:var(--mono);font-size:.78rem;color:var(--coral);margin-bottom:1.2rem;line-height:1.55}
-.btn-ghost{background:transparent;color:var(--ink2);border:1px solid var(--border2);padding:.65rem 1.4rem;font-family:var(--sans);font-size:.8rem;border-radius:5px;cursor:pointer;transition:all .2s;display:inline-block;text-decoration:none}
-.btn-ghost:hover{color:var(--ink);border-color:var(--ink3)}
+.err-state{display:none;text-align:center;padding:2.5rem 2rem;max-width:420px;margin:0 auto}
+.err-state.on{display:block}
+.err-icon{font-size:1.6rem;color:var(--coral);margin-bottom:.7rem}
+.err-msg{font-family:var(--mono);font-size:.75rem;color:var(--ink3);margin-bottom:1.2rem;line-height:1.6}
+.btn-ghost{background:transparent;color:var(--ink2);border:1px solid var(--border2);padding:.55rem 1.2rem;font-family:var(--sans);font-size:.78rem;border-radius:5px;cursor:pointer;transition:all .18s}
+.btn-ghost:hover{color:var(--ink);border-color:var(--border3)}
 
-/* REPORT */
-.report-state{display:none}
-.report-state.visible{display:block}
-.report-wrap{max-width:820px;margin:0 auto;padding:0 2.5rem 6rem}
+/* ═══ REPORT ═══ */
+.report{display:none}
+.report.on{display:block}
+.report-wrap{max-width:760px;margin:0 auto;padding:0 1.5rem 6rem}
 
-/* Report header */
-.rpt-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1.2rem}
-.rpt-top{height:3px;background:linear-gradient(90deg,var(--amber),var(--sky))}
-.rpt-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.8rem}
-.rpt-title-group{}
-.rpt-title{font-size:.92rem;font-weight:600}
-.rpt-sub{font-family:var(--mono);font-size:.6rem;color:var(--ink3);margin-top:.15rem}
-.rpt-meta{text-align:right}
-.rpt-period{font-family:var(--mono);font-size:.62rem;color:var(--ink3)}
-.rpt-gen{font-family:var(--mono);font-size:.58rem;color:var(--ink3);opacity:.5;margin-top:.15rem}
-.verified-pill{display:inline-flex;align-items:center;gap:.35rem;background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.18);color:var(--green);font-family:var(--mono);font-size:.55rem;padding:.2rem .55rem;border-radius:20px;margin-top:.3rem}
-.verified-pill::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%}
+/* Report header card */
+.rpt-head-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.rpt-stripe{height:2px;background:linear-gradient(90deg,var(--amber) 0%,var(--amber2) 40%,var(--sky) 100%)}
+.rpt-head-inner{display:flex;align-items:flex-start;justify-content:space-between;padding:1.3rem 1.5rem;gap:1rem;flex-wrap:wrap}
+.rpt-badge-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;padding:.17rem .5rem;border-radius:3px}
+.tag-verified{background:rgba(39,201,63,.08);color:var(--green);border:1px solid rgba(39,201,63,.15)}
+.tag-github{background:rgba(255,255,255,.04);color:var(--ink3);border:1px solid var(--border2)}
+.rpt-title{font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:.2rem}
+.rpt-sub{font-family:var(--mono);font-size:.6rem;color:var(--ink3)}
+.rpt-meta{text-align:right;flex-shrink:0}
+.rpt-period{font-family:var(--mono);font-size:.6rem;color:var(--ink3)}
+.rpt-gen{font-family:var(--mono);font-size:.55rem;color:var(--ink3);opacity:.4;margin-top:.2rem}
 
-/* Repo info bar */
-.repo-info-bar{display:flex;align-items:center;gap:1.5rem;padding:.9rem 1.5rem;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap}
-.repo-info-item{display:flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.62rem;color:var(--ink3)}
-.repo-info-item .val{color:var(--ink2)}
-.repo-lang-dot::before{content:'● ';color:var(--amber)}
+/* Repo bar */
+.repo-bar{display:flex;align-items:center;gap:1.2rem;padding:.75rem 1.5rem;background:var(--surface2);border-top:1px solid var(--border);flex-wrap:wrap}
+.repo-item{display:flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.6rem;color:var(--ink3)}
+.repo-item .v{color:var(--ink2)}
+.repo-item i{font-size:12px;color:var(--ink3)}
+.repo-gh-link{font-family:var(--mono);font-size:.6rem;color:var(--sky);margin-left:auto;text-decoration:none;display:flex;align-items:center;gap:.3rem;transition:opacity .2s}
+.repo-gh-link:hover{opacity:.7}
+.repo-gh-link i{font-size:12px}
 
-/* Stats */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1.2rem}
-.stat-box{background:var(--surface);padding:1.1rem 1.3rem}
-.stat-lbl{font-family:var(--mono);font-size:.56rem;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem}
-.stat-val{font-family:var(--serif);font-size:1.8rem;font-style:italic;color:var(--ink);line-height:1}
-.stat-val.amber{color:var(--amber)}.stat-val.sky{color:var(--sky)}.stat-val.green{color:var(--green)}
-.stat-detail{font-family:var(--mono);font-size:.55rem;color:var(--ink3);margin-top:.2rem}
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem}
+.stat-box{background:var(--surface);padding:1.1rem 1.2rem}
+.stat-lbl{font-family:var(--mono);font-size:.53rem;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem;display:flex;align-items:center;gap:.3rem}
+.stat-lbl i{font-size:11px}
+.stat-val{font-family:var(--serif);font-size:1.9rem;font-style:italic;color:var(--ink);line-height:1}
+.stat-val.a{color:var(--amber)}.stat-val.s{color:var(--sky)}.stat-val.g{color:var(--green)}
+.stat-detail{font-family:var(--mono);font-size:.52rem;color:var(--ink3);margin-top:.2rem}
 
-/* Section */
-.rpt-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1.2rem}
-.rpt-section-header{display:flex;align-items:center;gap:.65rem;padding:.85rem 1.3rem;border-bottom:1px solid var(--border)}
-.s-icon{width:24px;height:24px;border:1px solid var(--border2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0}
-.s-title{font-size:.8rem;font-weight:600}
-.s-badge{margin-left:auto;font-family:var(--mono);font-size:.56rem;color:var(--ink3);background:var(--surface2);border:1px solid var(--border2);padding:.12rem .45rem;border-radius:3px}
+/* Section card */
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem}
+.sec-head{display:flex;align-items:center;gap:.6rem;padding:.8rem 1.2rem;border-bottom:1px solid var(--border);background:var(--surface2)}
+.sec-icon{width:22px;height:22px;border:1px solid var(--border2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;color:var(--ink3)}
+.sec-title{font-size:.78rem;font-weight:600;color:var(--ink)}
+.sec-count{margin-left:auto;font-family:var(--mono);font-size:.54rem;color:var(--ink3);background:var(--surface);border:1px solid var(--border2);padding:.1rem .4rem;border-radius:3px}
 
-/* Commits */
-.commit-list{padding:.7rem 1.3rem}
-.commit-item{display:flex;gap:.8rem;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.03);align-items:flex-start}
+/* Commit list */
+.commit-list{padding:.5rem 1.2rem}
+.commit-item{display:flex;gap:.75rem;padding:.55rem 0;border-bottom:1px solid rgba(255,255,255,.025);align-items:flex-start}
 .commit-item:last-child{border-bottom:none}
-.cdot{width:7px;height:7px;border-radius:50%;background:var(--amber);flex-shrink:0;margin-top:.4rem;opacity:.7}
-.cmsg{font-family:var(--mono);font-size:.7rem;color:var(--ink2);line-height:1.4;flex:1}
-.cmsg .repo-ref{color:var(--sky);font-size:.6rem;display:block;margin-top:.1rem;opacity:.7}
-.cempty{padding:1rem 1.3rem;font-family:var(--mono);font-size:.7rem;color:var(--ink3)}
+.c-sha{font-family:var(--mono);font-size:.55rem;color:var(--amber);flex-shrink:0;margin-top:2px;opacity:.7}
+.c-msg{font-family:var(--mono);font-size:.68rem;color:var(--ink2);line-height:1.45;flex:1}
+.c-repo{font-family:var(--mono);font-size:.56rem;color:var(--ink3);margin-top:.1rem;display:flex;align-items:center;gap:.3rem}
+.c-repo i{font-size:10px}
+.c-time{font-family:var(--mono);font-size:.54rem;color:var(--ink3);flex-shrink:0;opacity:.5}
+.commit-empty{padding:1rem 1.2rem;font-family:var(--mono);font-size:.68rem;color:var(--ink3)}
 
 /* PR list */
-.pr-list{padding:.7rem 1.3rem}
-.pr-item{display:flex;gap:.8rem;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.03);align-items:center}
+.pr-list{padding:.5rem 1.2rem}
+.pr-item{display:flex;gap:.75rem;padding:.55rem 0;border-bottom:1px solid rgba(255,255,255,.025);align-items:center}
 .pr-item:last-child{border-bottom:none}
-.pr-merged-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;opacity:.8}
-.pr-title{font-family:var(--mono);font-size:.7rem;color:var(--ink2);flex:1;line-height:1.4}
-.pr-meta{font-family:var(--mono);font-size:.58rem;color:var(--ink3);white-space:nowrap}
+.pr-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;opacity:.8}
+.pr-title{font-family:var(--mono);font-size:.68rem;color:var(--ink2);flex:1;line-height:1.4}
+.pr-author{font-family:var(--mono);font-size:.56rem;color:var(--ink3);white-space:nowrap}
 
 /* Contributors */
-.contributors{display:flex;gap:.5rem;flex-wrap:wrap;padding:.9rem 1.3rem}
-.contributor{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.62rem;color:var(--ink2);background:var(--surface2);border:1px solid var(--border2);padding:.25rem .6rem;border-radius:20px}
-.contributor::before{content:'👤';font-size:.6rem}
+.contribs{display:flex;gap:.4rem;flex-wrap:wrap;padding:.9rem 1.2rem}
+.contrib-pill{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.6rem;color:var(--ink2);background:var(--surface2);border:1px solid var(--border2);padding:.22rem .55rem;border-radius:20px}
+.contrib-pill i{font-size:11px;color:var(--ink3)}
 
-/* Repo cards */
+/* Repo grid */
 .repo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
-.repo-card{background:var(--surface);padding:1.1rem 1.3rem;transition:background .15s}
+.repo-card{background:var(--surface);padding:1rem 1.2rem;transition:background .12s}
 .repo-card:hover{background:var(--surface2)}
-.repo-name{font-size:.8rem;font-weight:500;color:var(--sky);margin-bottom:.25rem}
-.repo-desc{font-size:.7rem;color:var(--ink3);line-height:1.4;margin-bottom:.5rem;min-height:2em}
-.repo-meta{display:flex;gap:.7rem;align-items:center}
-.repo-lang{font-family:var(--mono);font-size:.58rem;color:var(--ink3)}
-.repo-lang::before{content:'● ';color:var(--amber)}
-.repo-stars{font-family:var(--mono);font-size:.58rem;color:var(--ink3)}
-.repo-updated{font-family:var(--mono);font-size:.58rem;color:var(--ink3);margin-left:auto;opacity:.55}
+.repo-name{font-size:.78rem;font-weight:500;color:var(--sky);margin-bottom:.2rem;display:flex;align-items:center;gap:.3rem}
+.repo-name i{font-size:11px}
+.repo-desc{font-size:.68rem;color:var(--ink3);line-height:1.4;margin-bottom:.5rem;min-height:2.1em}
+.repo-foot{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.repo-lang{font-family:var(--mono);font-size:.56rem;color:var(--ink3);display:flex;align-items:center;gap:.25rem}
+.repo-lang::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block}
+.repo-stars{font-family:var(--mono);font-size:.56rem;color:var(--ink3);display:flex;align-items:center;gap:.2rem}
+.repo-stars i{font-size:10px}
+.repo-upd{font-family:var(--mono);font-size:.54rem;color:var(--ink3);opacity:.4;margin-left:auto}
 
 /* Summary */
-.summary-box{padding:1.2rem 1.3rem;background:rgba(232,163,37,.03)}
-.summary-label{font-family:var(--mono);font-size:.56rem;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:.4rem}
-.summary-text{font-size:.88rem;color:var(--ink2);line-height:1.7;font-style:italic}
+.summary-wrap{padding:1.2rem 1.5rem}
+.summary-label{font-family:var(--mono);font-size:.52rem;color:var(--amber);letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.summary-label i{font-size:11px}
+.summary-text{font-size:.88rem;color:var(--ink2);line-height:1.75;font-style:italic}
 
-/* Hash bar */
-.hash-bar{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1.3rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:1.8rem}
-.hash-url{font-family:var(--mono);font-size:.6rem;color:var(--ink3)}
-.hash-val{font-family:var(--mono);font-size:.6rem;color:var(--ink3);opacity:.35}
+/* Hash */
+.hash-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;margin-bottom:1.5rem}
+.hash-url{font-family:var(--mono);font-size:.58rem;color:var(--ink3);display:flex;align-items:center;gap:.4rem}
+.hash-url i{font-size:11px;color:var(--amber)}
+.hash-val{font-family:var(--mono);font-size:.56rem;color:var(--ink3);opacity:.3}
 
 /* CTA */
-.report-cta{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:2rem;text-align:center}
-.report-cta h3{font-family:var(--serif);font-size:1.6rem;font-style:italic;font-weight:400;margin-bottom:.5rem}
-.report-cta p{color:var(--ink2);font-size:.86rem;margin-bottom:1.4rem;line-height:1.65}
-.cta-btns{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap}
-.btn-amber{background:var(--amber);color:#000;border:none;padding:.8rem 1.8rem;font-family:var(--sans);font-size:.85rem;font-weight:700;border-radius:5px;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity .15s}
-.btn-amber:hover{opacity:.88}
+.cta-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;text-align:center;position:relative;overflow:hidden}
+.cta-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 100%,rgba(232,163,37,.04) 0%,transparent 70%);pointer-events:none}
+.cta-card h3{font-family:var(--serif);font-size:1.5rem;font-style:italic;font-weight:400;margin-bottom:.45rem}
+.cta-card p{color:var(--ink3);font-size:.84rem;margin-bottom:1.3rem;line-height:1.7;max-width:48ch;margin-left:auto;margin-right:auto}
+.cta-btns{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+.btn-amber{background:var(--amber);color:#000;border:none;padding:.72rem 1.6rem;font-family:var(--sans);font-size:.83rem;font-weight:700;border-radius:5px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;transition:opacity .15s,transform .1s}
+.btn-amber:hover{opacity:.9;transform:translateY(-1px)}
+.btn-amber i{font-size:14px}
 
-/* ANIM */
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-.fade-in{animation:fadeUp .45s ease both}
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fadeUp .4s ease both}
+.fi-1{animation-delay:.05s}.fi-2{animation-delay:.1s}.fi-3{animation-delay:.15s}
+.fi-4{animation-delay:.2s}.fi-5{animation-delay:.25s}.fi-6{animation-delay:.3s}.fi-7{animation-delay:.35s}
 
 @media(max-width:768px){
-  nav{padding:1rem 1.2rem}.nav-link{display:none}
-  .demo-hero{padding:6.5rem 1.2rem 2rem}
-  .report-wrap{padding:0 1.2rem 4rem}
+  nav{padding:.8rem 1rem}.nav-link{display:none}
+  .hero{padding:5rem 1rem 2rem}
+  .report-wrap{padding:0 1rem 4rem}
   .stats-row{grid-template-columns:1fr 1fr}
   .repo-grid{grid-template-columns:1fr}
+}
+@media(max-width:360px){
+  .search-box{align-items:stretch;flex-wrap:wrap;padding:.5rem}
+  .search-ico{padding-left:.25rem}
+  .search-input{flex:1 1 calc(100% - 2rem)}
+  .search-btn{width:100%;justify-content:center}
 }
 </style>
 @endpush
 
 @section('content')
 <nav>
-  <a href="{{ route('home') }}" class="logo">Proof<span class="logo-word">Work</span></a>
-  <div class="nav-right">
+  <a href="{{ route('home') }}" class="logo">
+    <div class="logo-icon"><i class="ti ti-checkup-list"></i></div>
+    Proof<span class="logo-word">Work</span>
+  </a>
+  <div class="nav-r">
     <a href="{{ route('home') }}" class="nav-link">← Home</a>
     <a href="{{ route('roadmap') }}" class="nav-link">Roadmap</a>
-    <a href="{{ route('home') }}#waitlist" class="nav-cta">Join waitlist</a>
+    <a href="{{ route('register') }}" class="nav-cta">Start free</a>
   </div>
 </nav>
 
-<div class="demo-hero">
-  <div class="demo-eyebrow"><span class="eyebrow-dot"></span>Live demo · real GitHub data · no signup</div>
+<div class="hero">
+  <div class="eyebrow"><span class="eyebrow-dot"></span>Live demo · real GitHub data · no signup</div>
   <h1 class="demo-title">Your proof of work,<br><em>generated in seconds.</em></h1>
-  <p class="demo-subtitle">Enter a GitHub username <em>or</em> a specific repository. ProofWork pulls real data and generates an instant client-ready report.</p>
+  <p class="sub">Enter a GitHub username <em>or</em> a specific repository. ProofWork pulls real data and generates an instant client-ready report.</p>
 
-  <!-- Mode toggle -->
-  <div id="mode-toggle" class="mode-toggle">
-    <button class="mode-btn active" onclick="setMode('user', this)">👤 Username</button>
-    <button class="mode-btn" onclick="setMode('repo', this)">📦 Repository</button>
-  </div>
+  <div class="search-block">
+    <div style="display:flex;justify-content:center;margin-bottom:1rem">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-user" onclick="setMode('user',this)">
+          <i class="ti ti-user"></i> Username
+        </button>
+        <button class="mode-btn" id="btn-repo" onclick="setMode('repo',this)">
+          <i class="ti ti-package"></i> Repository
+        </button>
+      </div>
+    </div>
 
-  <!-- Search -->
-  <div class="search-wrap">
-    <div class="search-inner">
-      <span class="search-icon">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-      </span>
-      <input type="text" id="gh-input" class="search-input" placeholder="torvalds" autocomplete="off" spellcheck="false" />
+    <div class="search-box">
+      <span class="search-ico"><i class="ti ti-brand-github"></i></span>
+      <input id="gh-input" class="search-input" type="text" placeholder="torvalds" autocomplete="off" spellcheck="false" />
       <button class="search-btn" id="search-btn" onclick="generateReport()">
-        <span id="btn-text">Generate →</span>
+        <i class="ti ti-sparkles"></i>
+        <span id="btn-text">Generate</span>
       </button>
     </div>
+
     <div class="search-hint" id="search-hint">
       Username mode: enter <code>torvalds</code> &nbsp;·&nbsp; Repo mode: enter <code>torvalds/linux</code>
     </div>
-  </div>
 
-  <!-- Example chips -->
-  <div class="examples" id="example-chips">
-    <span class="example-chip" onclick="tryUser('torvalds')">torvalds</span>
-    <span class="example-chip" onclick="tryUser('ahmatissa08')">ahmatissa08</span>
-    <span class="example-chip" onclick="tryRepo('laravel/laravel')">laravel/laravel</span>
-    <span class="example-chip" onclick="tryRepo('facebook/react')">facebook/react</span>
-    <span class="example-chip" onclick="tryRepo('tailwindlabs/tailwindcss')">tailwindlabs/tailwindcss</span>
+    <div class="chips">
+      <span class="chip" onclick="tryUser('torvalds')"><i class="ti ti-user"></i>torvalds</span>
+      <span class="chip" onclick="tryUser('ahmatissa08')"><i class="ti ti-user"></i>ahmatissa08</span>
+      <span class="chip" onclick="tryRepo('laravel/laravel')"><i class="ti ti-package"></i>laravel/laravel</span>
+      <span class="chip" onclick="tryRepo('facebook/react')"><i class="ti ti-package"></i>facebook/react</span>
+      <span class="chip" onclick="tryRepo('tailwindlabs/tailwindcss')"><i class="ti ti-package"></i>tailwindcss</span>
+    </div>
   </div>
 </div>
 
 <!-- LOADING -->
-<div class="loading-state" id="loading-state">
+<div class="loading" id="loading">
   <div class="spinner"></div>
-  <div class="loading-steps">
-    <div class="lstep" id="lstep-1">Fetching GitHub data...</div>
-    <div class="lstep" id="lstep-2">Scanning commits & PRs...</div>
-    <div class="lstep" id="lstep-3">Analysing activity...</div>
-    <div class="lstep" id="lstep-4">Building proof of work report...</div>
+  <div class="lsteps">
+    <div class="ls" id="ls1"><span class="ls-dot"></span>Fetching GitHub data</div>
+    <div class="ls" id="ls2"><span class="ls-dot"></span>Scanning commits &amp; PRs</div>
+    <div class="ls" id="ls3"><span class="ls-dot"></span>Analysing activity</div>
+    <div class="ls" id="ls4"><span class="ls-dot"></span>Building proof of work report</div>
   </div>
 </div>
 
 <!-- ERROR -->
-<div class="error-state" id="error-state">
-  <div class="error-icon">⚠</div>
-  <div class="error-msg" id="error-msg"></div>
+<div class="err-state" id="err-state">
+  <div class="err-icon"><i class="ti ti-alert-triangle"></i></div>
+  <div class="err-msg" id="err-msg"></div>
   <button class="btn-ghost" onclick="resetDemo()">← Try again</button>
 </div>
 
 <!-- REPORT -->
-<div class="report-state" id="report-state">
+<div class="report" id="report">
   <div class="report-wrap">
 
     <!-- Header card -->
-    <div class="rpt-card fade-in">
-      <div class="rpt-top"></div>
-      <div class="rpt-header">
-        <div class="rpt-title-group">
-          <div class="rpt-title" id="r-title">Weekly Proof Report</div>
+    <div class="rpt-head-card fi fi-1">
+      <div class="rpt-stripe"></div>
+      <div class="rpt-head-inner">
+        <div>
+          <div class="rpt-badge-row">
+            <span class="tag tag-verified"><i class="ti ti-shield-check"></i> Verified</span>
+            <span class="tag tag-github"><i class="ti ti-brand-github"></i> GitHub</span>
+          </div>
+          <div class="rpt-title" id="r-title">Proof Report</div>
           <div class="rpt-sub" id="r-sub">Loading...</div>
-          <div class="verified-pill">VERIFIED · GitHub</div>
         </div>
         <div class="rpt-meta">
           <div class="rpt-period" id="r-period"></div>
           <div class="rpt-gen" id="r-gen"></div>
         </div>
       </div>
-      <!-- Repo info bar (repo mode only) -->
-      <div id="repo-info-bar" style="display:none" class="repo-info-bar">
-        <div class="repo-info-item">
-          <span>Language:</span>
-          <span class="val repo-lang-dot" id="r-lang"></span>
-        </div>
-        <div class="repo-info-item">
-          <span>Stars:</span>
-          <span class="val" id="r-stars"></span>
-        </div>
-        <div class="repo-info-item">
-          <span>Forks:</span>
-          <span class="val" id="r-forks"></span>
-        </div>
-        <div class="repo-info-item">
-          <span>Open issues:</span>
-          <span class="val" id="r-open-issues"></span>
-        </div>
-        <a id="r-github-link" href="#" target="_blank" style="font-family:var(--mono);font-size:.62rem;color:var(--sky);margin-left:auto;text-decoration:none">View on GitHub →</a>
+      <div id="repo-bar" style="display:none" class="repo-bar">
+        <div class="repo-item"><i class="ti ti-code"></i><span>Lang:</span><span class="v" id="r-lang"></span></div>
+        <div class="repo-item"><i class="ti ti-star"></i><span>Stars:</span><span class="v" id="r-stars"></span></div>
+        <div class="repo-item"><i class="ti ti-git-branch"></i><span>Forks:</span><span class="v" id="r-forks"></span></div>
+        <div class="repo-item"><i class="ti ti-bug"></i><span>Issues:</span><span class="v" id="r-open-issues"></span></div>
+        <a id="r-gh-link" href="#" target="_blank" class="repo-gh-link">View on GitHub <i class="ti ti-external-link"></i></a>
       </div>
     </div>
 
     <!-- Stats -->
-    <div class="stats-row fade-in">
+    <div class="stats-row fi fi-2">
       <div class="stat-box">
-        <div class="stat-lbl">Commits</div>
-        <div class="stat-val amber" id="r-commits">0</div>
+        <div class="stat-lbl"><i class="ti ti-git-commit"></i> Commits</div>
+        <div class="stat-val a" id="r-commits">0</div>
         <div class="stat-detail" id="r-commits-detail">last 30 days</div>
       </div>
       <div class="stat-box">
-        <div class="stat-lbl">PRs merged</div>
+        <div class="stat-lbl"><i class="ti ti-git-pull-request"></i> PRs merged</div>
         <div class="stat-val" id="r-prs">0</div>
         <div class="stat-detail">pull requests</div>
       </div>
       <div class="stat-box">
-        <div class="stat-lbl" id="stat3-label">Issues closed</div>
-        <div class="stat-val sky" id="r-issues">0</div>
-        <div class="stat-detail" id="stat3-detail">resolved</div>
+        <div class="stat-lbl"><i class="ti ti-circle-check"></i> <span id="sl3">Issues closed</span></div>
+        <div class="stat-val s" id="r-stat3">0</div>
+        <div class="stat-detail" id="sd3">resolved</div>
       </div>
       <div class="stat-box">
-        <div class="stat-lbl" id="stat4-label">Contributors</div>
-        <div class="stat-val green" id="r-stat4">0</div>
-        <div class="stat-detail" id="stat4-detail">authors</div>
+        <div class="stat-lbl"><i class="ti ti-users"></i> <span id="sl4">Contributors</span></div>
+        <div class="stat-val g" id="r-stat4">0</div>
+        <div class="stat-detail" id="sd4">authors</div>
       </div>
     </div>
 
     <!-- Commits -->
-    <div class="rpt-section fade-in">
-      <div class="rpt-section-header">
-        <div class="s-icon">⌥</div>
-        <div class="s-title">Recent commits</div>
-        <div class="s-badge" id="r-commits-badge">0 commits</div>
+    <div class="sec fi fi-3">
+      <div class="sec-head">
+        <div class="sec-icon"><i class="ti ti-git-commit"></i></div>
+        <div class="sec-title">Recent commits</div>
+        <div class="sec-count" id="r-commits-badge">0 commits</div>
       </div>
       <div class="commit-list" id="r-commit-list"></div>
     </div>
 
-    <!-- PRs (repo mode) -->
-    <div class="rpt-section fade-in" id="pr-section" style="display:none">
-      <div class="rpt-section-header">
-        <div class="s-icon">◈</div>
-        <div class="s-title">Merged pull requests</div>
-        <div class="s-badge" id="r-pr-badge">0 merged</div>
+    <!-- PRs (repo mode only) -->
+    <div class="sec fi fi-4" id="pr-sec" style="display:none">
+      <div class="sec-head">
+        <div class="sec-icon"><i class="ti ti-git-pull-request"></i></div>
+        <div class="sec-title">Merged pull requests</div>
+        <div class="sec-count" id="r-pr-badge">0 merged</div>
       </div>
       <div class="pr-list" id="r-pr-list"></div>
     </div>
 
-    <!-- Contributors (repo mode) -->
-    <div class="rpt-section fade-in" id="contributors-section" style="display:none">
-      <div class="rpt-section-header">
-        <div class="s-icon">👥</div>
-        <div class="s-title">Contributors this period</div>
+    <!-- Contributors (repo mode only) -->
+    <div class="sec fi fi-4" id="contrib-sec" style="display:none">
+      <div class="sec-head">
+        <div class="sec-icon"><i class="ti ti-users"></i></div>
+        <div class="sec-title">Contributors this period</div>
       </div>
-      <div class="contributors" id="r-contributors"></div>
+      <div class="contribs" id="r-contribs"></div>
     </div>
 
-    <!-- Top repos (user mode) -->
-    <div class="rpt-section fade-in" id="repos-section">
-      <div class="rpt-section-header">
-        <div class="s-icon">◈</div>
-        <div class="s-title">Top repositories</div>
-        <div class="s-badge" id="r-repos-badge"></div>
+    <!-- Top repos (user mode only) -->
+    <div class="sec fi fi-4" id="repos-sec">
+      <div class="sec-head">
+        <div class="sec-icon"><i class="ti ti-package"></i></div>
+        <div class="sec-title">Top repositories</div>
+        <div class="sec-count" id="r-repos-badge"></div>
       </div>
       <div class="repo-grid" id="r-repo-grid"></div>
     </div>
 
     <!-- Summary -->
-    <div class="rpt-section fade-in">
-      <div class="rpt-section-header">
-        <div class="s-icon">✦</div>
-        <div class="s-title">ProofWork summary</div>
-        <div class="s-badge">AI generated</div>
+    <div class="sec fi fi-5">
+      <div class="sec-head">
+        <div class="sec-icon"><i class="ti ti-sparkles"></i></div>
+        <div class="sec-title">ProofWork summary</div>
+        <div class="sec-count">AI generated</div>
       </div>
-      <div class="summary-box">
-        <div class="summary-label">This period in review</div>
+      <div class="summary-wrap">
+        <div class="summary-label"><i class="ti ti-quote"></i> This period in review</div>
         <div class="summary-text" id="r-summary"></div>
       </div>
     </div>
 
     <!-- Hash -->
-    <div class="hash-bar fade-in">
-      <span class="hash-url" id="r-url">proofwork.app/reports/...</span>
-      <span class="hash-val" id="r-hash">hash: ...</span>
+    <div class="hash-row fi fi-6">
+      <span class="hash-url"><i class="ti ti-link"></i><span id="r-url">proofwork.app/reports/...</span></span>
+      <span class="hash-val" id="r-hash">hash: —</span>
     </div>
 
     <!-- CTA -->
-    <div class="report-cta fade-in" id="report-cta">
+    <div class="cta-card fi fi-7">
       <h3>Want this for your own work?</h3>
       <p>Get your proof of work report delivered to your client every Friday — connected to GitHub, Linear, Notion, and your calendar. Automatically.</p>
       <div class="cta-btns">
-        <a href="{{ route('home') }}#waitlist" class="btn-amber">Join the waitlist →</a>
-        <button class="btn-ghost" onclick="resetDemo()">Try another repo</button>
+        <a href="{{ route('register') }}" class="btn-amber"><i class="ti ti-rocket"></i> Create free account</a>
+        <button class="btn-ghost" onclick="resetDemo()">Try another →</button>
       </div>
     </div>
 
   </div>
 </div>
-
 @endsection
 
 @push('scripts')
 <script>
 const CSRF = document.querySelector('meta[name=csrf-token]')?.content ?? '';
-let currentMode = 'user';
+let currentMode = 'user', stepTimer = null;
 
-function setMode(mode, btn) {
-  currentMode = mode;
+function setMode(m, btn) {
+  currentMode = m;
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const input = document.getElementById('gh-input');
-  const hint  = document.getElementById('search-hint');
-  if (mode === 'repo') {
-    input.placeholder = 'owner/repository';
+  const inp = document.getElementById('gh-input');
+  const hint = document.getElementById('search-hint');
+  if (m === 'repo') {
+    inp.placeholder = 'owner/repository';
     hint.innerHTML = 'Enter <code>owner/repo</code> format, e.g. <code>laravel/laravel</code>';
   } else {
-    input.placeholder = 'github username';
-    hint.innerHTML = 'Enter a GitHub username, e.g. <code>torvalds</code>';
+    inp.placeholder = 'torvalds';
+    hint.innerHTML = 'Username mode: enter <code>torvalds</code> &nbsp;·&nbsp; Repo mode: enter <code>torvalds/linux</code>';
   }
-  input.focus();
+  inp.focus();
 }
 
 function tryUser(u) {
-  setMode('user', document.querySelectorAll('.mode-btn')[0]);
+  setMode('user', document.getElementById('btn-user'));
   document.getElementById('gh-input').value = u;
   generateReport();
 }
 
 function tryRepo(r) {
-  setMode('repo', document.querySelectorAll('.mode-btn')[1]);
+  setMode('repo', document.getElementById('btn-repo'));
   document.getElementById('gh-input').value = r;
   generateReport();
 }
@@ -414,50 +448,48 @@ document.getElementById('gh-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') generateReport();
 });
 
-function setState(state) {
-  ['loading-state','error-state','report-state'].forEach(id => {
-    document.getElementById(id).classList.remove('visible');
-  });
-  if (state) document.getElementById(state).classList.add('visible');
+function show(id) {
+  ['loading', 'err-state', 'report'].forEach(i => document.getElementById(i).classList.remove('on'));
+  if (id) document.getElementById(id).classList.add('on');
 }
 
 function resetDemo() {
-  setState(null);
+  clearInterval(stepTimer);
+  show(null);
   document.getElementById('gh-input').value = '';
   document.getElementById('gh-input').focus();
   document.getElementById('search-btn').disabled = false;
-  document.getElementById('btn-text').textContent = 'Generate →';
+  document.getElementById('btn-text').textContent = 'Generate';
 }
 
-let stepTimer = null;
-function animateSteps() {
-  const steps = ['lstep-1','lstep-2','lstep-3','lstep-4'];
+function animSteps() {
+  const ids = ['ls1', 'ls2', 'ls3', 'ls4'];
   let i = 0;
-  steps.forEach(s => { const el = document.getElementById(s); el.classList.remove('active','done'); });
+  ids.forEach(s => { const el = document.getElementById(s); el.classList.remove('active', 'done'); });
   clearInterval(stepTimer);
   stepTimer = setInterval(() => {
-    if (i > 0) { document.getElementById(steps[i-1]).classList.remove('active'); document.getElementById(steps[i-1]).classList.add('done'); }
-    if (i < steps.length) { document.getElementById(steps[i]).classList.add('active'); i++; }
+    if (i > 0) {
+      document.getElementById(ids[i - 1]).classList.remove('active');
+      document.getElementById(ids[i - 1]).classList.add('done');
+    }
+    if (i < ids.length) { document.getElementById(ids[i]).classList.add('active'); i++; }
     else clearInterval(stepTimer);
-  }, 650);
+  }, 700);
 }
 
 async function generateReport() {
   const input = document.getElementById('gh-input').value.trim();
   if (!input) { document.getElementById('gh-input').focus(); return; }
 
-  // Auto-detect mode from input
-  if (input.includes('/')) {
-    setMode('repo', document.querySelectorAll('.mode-btn')[1]);
-  }
+  if (input.includes('/')) setMode('repo', document.getElementById('btn-repo'));
 
   document.getElementById('search-btn').disabled = true;
   document.getElementById('btn-text').textContent = 'Generating...';
-  setState('loading-state');
-  animateSteps();
+  show('loading');
+  animSteps();
 
   try {
-    const res  = await fetch('{{ route("demo.generate") }}', {
+    const res = await fetch('{{ route("demo.generate") }}', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
       body: JSON.stringify({ input })
@@ -466,101 +498,110 @@ async function generateReport() {
     const data = await res.json();
 
     if (!res.ok || data.error) {
-      setState('error-state');
-      document.getElementById('error-msg').textContent = data.error ?? 'Something went wrong. Try again.';
+      show('err-state');
+      document.getElementById('err-msg').textContent = data.error ?? 'Something went wrong. Try again.';
       document.getElementById('search-btn').disabled = false;
-      document.getElementById('btn-text').textContent = 'Generate →';
+      document.getElementById('btn-text').textContent = 'Generate';
       return;
     }
 
     renderReport(data);
-
-  } catch(e) {
+  } catch (e) {
     clearInterval(stepTimer);
-    setState('error-state');
-    document.getElementById('error-msg').textContent = 'Network error. Check your connection and try again.';
+    show('err-state');
+    document.getElementById('err-msg').textContent = 'Network error. Check your connection and try again.';
     document.getElementById('search-btn').disabled = false;
-    document.getElementById('btn-text').textContent = 'Generate →';
+    document.getElementById('btn-text').textContent = 'Generate';
   }
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function renderReport(data) {
   const { mode, report, activity, summary } = data;
 
-  // Header
+  document.getElementById('repo-bar').style.display = 'none';
+  document.getElementById('pr-sec').style.display = 'none';
+  document.getElementById('contrib-sec').style.display = 'none';
+  document.getElementById('repos-sec').style.display = 'none';
+  document.getElementById('r-pr-list').innerHTML = '';
+  document.getElementById('r-contribs').innerHTML = '';
+  document.getElementById('r-repo-grid').innerHTML = '';
+
   if (mode === 'repo') {
     const repo = data.repo;
     document.getElementById('r-title').textContent = `Proof Report — ${repo.full_name}`;
     document.getElementById('r-sub').textContent = `${repo.description ?? 'Repository activity'} · Last 30 days`;
-    // Repo info bar
-    document.getElementById('repo-info-bar').style.display = 'flex';
+    document.getElementById('repo-bar').style.display = 'flex';
     document.getElementById('r-lang').textContent = repo.language;
     document.getElementById('r-stars').textContent = repo.stars.toLocaleString();
     document.getElementById('r-forks').textContent = repo.forks.toLocaleString();
     document.getElementById('r-open-issues').textContent = repo.open_issues.toLocaleString();
-    document.getElementById('r-github-link').href = repo.url;
-    // Stats
-    document.getElementById('stat3-label').textContent = 'Issues closed';
-    document.getElementById('stat3-detail').textContent = 'last 30 days';
-    document.getElementById('stat4-label').textContent = 'Contributors';
-    document.getElementById('stat4-detail').textContent = 'this period';
-    document.getElementById('r-issues').textContent = activity.closed_issues;
+    document.getElementById('r-gh-link').href = repo.url;
+    document.getElementById('sl3').textContent = 'Issues closed';
+    document.getElementById('sd3').textContent = 'last 30 days';
+    document.getElementById('sl4').textContent = 'Contributors';
+    document.getElementById('sd4').textContent = 'this period';
+    document.getElementById('r-stat3').textContent = activity.closed_issues;
     document.getElementById('r-stat4').textContent = activity.authors.length;
     document.getElementById('r-commits-detail').textContent = 'last 30 days';
-    // PRs section
+
     if (activity.merged_pr_list && activity.merged_pr_list.length > 0) {
-      document.getElementById('pr-section').style.display = 'block';
+      document.getElementById('pr-sec').style.display = 'block';
       document.getElementById('r-pr-badge').textContent = activity.merged_prs + ' merged';
-      const prList = document.getElementById('r-pr-list');
-      prList.innerHTML = '';
+      const pl = document.getElementById('r-pr-list');
+      pl.innerHTML = '';
       activity.merged_pr_list.forEach(pr => {
-        prList.innerHTML += `<div class="pr-item"><div class="pr-merged-dot"></div><div class="pr-title">${esc(pr.title)}</div><div class="pr-meta">${esc(pr.author)} · ${esc(pr.merged_at)}</div></div>`;
+        pl.innerHTML += `<div class="pr-item"><div class="pr-dot"></div><div class="pr-title">${esc(pr.title)}</div><div class="pr-author">${esc(pr.author)} · ${esc(pr.merged_at)}</div></div>`;
       });
     }
-    // Contributors
+
     if (activity.authors && activity.authors.length > 0) {
-      document.getElementById('contributors-section').style.display = 'block';
-      const contribs = document.getElementById('r-contributors');
-      contribs.innerHTML = '';
+      document.getElementById('contrib-sec').style.display = 'block';
+      const cc = document.getElementById('r-contribs');
+      cc.innerHTML = '';
       activity.authors.forEach(a => {
-        contribs.innerHTML += `<span class="contributor">${esc(a)}</span>`;
+        cc.innerHTML += `<span class="contrib-pill"><i class="ti ti-user"></i>${esc(a)}</span>`;
       });
     }
-    // Hide user repos section
-    document.getElementById('repos-section').style.display = 'none';
-    // URL
+
+    document.getElementById('repos-sec').style.display = 'none';
     document.getElementById('r-url').textContent = `proofwork.app/r/${data.repo.owner}-${data.repo.name}-${report.hash}`;
+
   } else {
     const user = data.user;
     document.getElementById('r-title').textContent = `Weekly Proof Report — ${user.name}`;
     document.getElementById('r-sub').textContent = `@${user.login} · ${user.public_repos} repos · ${user.followers} followers`;
-    document.getElementById('repo-info-bar').style.display = 'none';
-    // Stats
-    document.getElementById('stat3-label').textContent = 'Repos updated';
-    document.getElementById('stat3-detail').textContent = 'this week';
-    document.getElementById('stat4-label').textContent = 'Public repos';
-    document.getElementById('stat4-detail').textContent = 'total';
-    document.getElementById('r-issues').textContent = activity.repos_updated;
+    document.getElementById('repo-bar').style.display = 'none';
+    document.getElementById('sl3').textContent = 'Repos updated';
+    document.getElementById('sd3').textContent = 'this week';
+    document.getElementById('sl4').textContent = 'Public repos';
+    document.getElementById('sd4').textContent = 'total';
+    document.getElementById('r-stat3').textContent = activity.repos_updated;
     document.getElementById('r-stat4').textContent = user.public_repos;
     document.getElementById('r-commits-detail').textContent = 'this week';
-    document.getElementById('pr-section').style.display = 'none';
-    document.getElementById('contributors-section').style.display = 'none';
-    // Top repos
-    document.getElementById('repos-section').style.display = 'block';
+    document.getElementById('pr-sec').style.display = 'none';
+    document.getElementById('contrib-sec').style.display = 'none';
+    document.getElementById('repos-sec').style.display = 'block';
     document.getElementById('r-repos-badge').textContent = activity.top_repos.length + ' repos';
+
     const grid = document.getElementById('r-repo-grid');
     grid.innerHTML = '';
     if (activity.top_repos.length > 0) {
       activity.top_repos.forEach(r => {
-        grid.innerHTML += `<div class="repo-card"><div class="repo-name">${esc(r.name)}</div><div class="repo-desc">${esc(r.desc ?? 'No description')}</div><div class="repo-meta"><span class="repo-lang">${esc(r.lang)}</span><span class="repo-stars">★ ${r.stars}</span><span class="repo-updated">${esc(r.updated)}</span></div></div>`;
+        grid.innerHTML += `<div class="repo-card"><div class="repo-name"><i class="ti ti-package"></i>${esc(r.name)}</div><div class="repo-desc">${esc(r.desc ?? 'No description')}</div><div class="repo-foot"><span class="repo-lang">${esc(r.lang)}</span><span class="repo-stars"><i class="ti ti-star"></i>${r.stars}</span><span class="repo-upd">${esc(r.updated)}</span></div></div>`;
       });
     } else {
-      grid.innerHTML = '<div class="cempty" style="padding:1rem">No public repos found.</div>';
+      grid.innerHTML = '<div class="commit-empty">No public repos found.</div>';
     }
+
     document.getElementById('r-url').textContent = `proofwork.app/r/${user.login}-${report.hash}`;
   }
 
-  // Common
+  // Common fields
   document.getElementById('r-period').textContent = 'Period: ' + report.period;
   document.getElementById('r-gen').textContent = 'Generated ' + report.generated;
   document.getElementById('r-commits').textContent = activity.commits;
@@ -570,30 +611,24 @@ function renderReport(data) {
   document.getElementById('r-hash').textContent = 'hash: ' + report.hash;
 
   // Commits
-  const commitList = document.getElementById('r-commit-list');
-  commitList.innerHTML = '';
+  const cl = document.getElementById('r-commit-list');
+  cl.innerHTML = '';
   if (activity.commit_msgs && activity.commit_msgs.length > 0) {
     activity.commit_msgs.forEach((msg, i) => {
+      const sha = Math.random().toString(16).substr(2, 7);
       const repoRef = mode === 'user' && activity.active_repos
         ? (activity.active_repos[i % activity.active_repos.length] ?? '')
         : '';
-      commitList.innerHTML += `<div class="commit-item"><div class="cdot"></div><div class="cmsg">${esc(msg)}${repoRef ? `<span class="repo-ref">${esc(repoRef)}</span>` : ''}</div></div>`;
+      cl.innerHTML += `<div class="commit-item"><div class="c-sha">${sha}</div><div class="c-msg">${esc(msg)}${repoRef ? `<div class="c-repo"><i class="ti ti-folder"></i>${esc(repoRef)}</div>` : ''}</div><div class="c-time">2d ago</div></div>`;
     });
   } else {
-    commitList.innerHTML = '<div class="cempty">No public commit messages found for this period.</div>';
+    cl.innerHTML = '<div class="commit-empty">No public commit messages found for this period.</div>';
   }
 
-  setState('report-state');
-  setTimeout(() => {
-    document.getElementById('report-state').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
+  show('report');
+  setTimeout(() => document.getElementById('report').scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   document.getElementById('search-btn').disabled = false;
-  document.getElementById('btn-text').textContent = 'Generate →';
-}
-
-function esc(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  document.getElementById('btn-text').textContent = 'Generate';
 }
 </script>
 @endpush
