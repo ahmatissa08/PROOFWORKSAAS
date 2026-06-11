@@ -144,15 +144,13 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('dashboard');
         }
 
-        $user = $request->user();
+        try {
+            $request->user()->sendEmailVerificationNotification();
+        } catch (Throwable $e) {
+            report($e);
 
-        defer(function () use ($user) {
-            try {
-                $user->sendEmailVerificationNotification();
-            } catch (Throwable $e) {
-                report($e);
-            }
-        }, 'resend-verification-email-'.$user->id, always: true);
+            return back()->with('warning', 'Verification email could not be sent. Please try again in a moment or contact support.');
+        }
 
         return back()->with('status', 'verification-link-sent');
     })->middleware('throttle:6,1')->name('verification.send');

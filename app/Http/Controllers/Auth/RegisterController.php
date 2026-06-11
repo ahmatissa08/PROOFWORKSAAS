@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -37,13 +36,15 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        defer(function () use ($user) {
-            try {
-                event(new Registered($user));
-            } catch (Throwable $e) {
-                report($e);
-            }
-        }, 'send-verification-email-'.$user->id, always: true);
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->route('verification.notice')
+                ->with('warning', 'Your account was created, but the verification email could not be sent. Please try resending it in a moment.');
+        }
 
         return redirect()->route('verification.notice');
     }
