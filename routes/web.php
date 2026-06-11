@@ -14,6 +14,7 @@ use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\DemoController;
 use App\Http\Middleware\AdminMiddleware;
+use App\Services\VerificationEmailService;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
@@ -139,13 +140,13 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('onboarding');
     })->middleware('signed')->name('verification.verify');
 
-    Route::post('/email/verification-notification', function (Request $request) {
+    Route::post('/email/verification-notification', function (Request $request, VerificationEmailService $verificationEmail) {
         if ($request->user()->hasVerifiedEmail()) {
             return redirect()->route('dashboard');
         }
 
         try {
-            $request->user()->sendEmailVerificationNotification();
+            $verificationEmail->send($request->user());
         } catch (Throwable $e) {
             report($e);
 

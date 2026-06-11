@@ -14,6 +14,12 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'resend' => [
+        'key' => env('RESEND_API_KEY'),
+        'from' => env('RESEND_FROM_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@proofwork.app')),
+        'timeout' => env('RESEND_TIMEOUT', 15),
+    ],
+
     'linear' => [
         'client_id' => env('LINEAR_CLIENT_ID'),
         'client_secret' => env('LINEAR_CLIENT_SECRET'),

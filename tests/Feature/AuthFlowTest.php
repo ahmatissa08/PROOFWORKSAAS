@@ -3,10 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
@@ -16,7 +15,14 @@ class AuthFlowTest extends TestCase
 
     public function test_user_can_register_and_is_redirected_to_verification_notice(): void
     {
-        Notification::fake();
+        config([
+            'services.resend.key' => 'test-resend-key',
+            'services.resend.from' => 'ProofWork <hello@example.com>',
+        ]);
+
+        Http::fake([
+            'https://api.resend.com/emails' => Http::response(['id' => 'email_test'], 200),
+        ]);
 
         $response = $this->post('/register', [
             'name' => 'Test User',
@@ -30,7 +36,10 @@ class AuthFlowTest extends TestCase
 
         $user = User::where('email', 'test@example.com')->first();
         $this->assertNotNull($user);
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.resend.com/emails'
+            && $request->hasHeader('Authorization', 'Bearer test-resend-key')
+            && $request['to'] === ['test@example.com']
+            && str_contains($request['html'], (string) $user->id));
     }
 
     public function test_user_cannot_register_with_weak_password(): void
@@ -80,6 +89,56 @@ class AuthFlowTest extends TestCase
         $response = $this->actingAs($user)->get(route('verification.notice'));
 
         $response->assertRedirect(route('dashboard'));
+    }
+
+    public function test_user_can_resend_verification_email_via_resend(): void
+    {
+        config([
+            'services.resend.key' => 'test-resend-key',
+            'services.resend.from' => 'ProofWork <hello@example.com>',
+        ]);
+
+        Http::fake([
+            'https://api.resend.com/emails' => Http::response(['id' => 'email_test'], 200),
+        ]);
+
+        $user = User::create([
+            'name' => 'Needs Verification',
+            'email' => 'resend-verification@example.com',
+            'password' => Hash::make('password123'),
+            'plan' => 'free',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('verification.send'));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('status', 'verification-link-sent');
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.resend.com/emails'
+            && $request['to'] === ['resend-verification@example.com']);
+    }
+
+    public function test_resend_verification_shows_warning_when_email_provider_fails(): void
+    {
+        config([
+            'services.resend.key' => 'test-resend-key',
+            'services.resend.from' => 'ProofWork <hello@example.com>',
+        ]);
+
+        Http::fake([
+            'https://api.resend.com/emails' => Http::response(['message' => 'domain is not verified'], 403),
+        ]);
+
+        $user = User::create([
+            'name' => 'Needs Verification',
+            'email' => 'resend-fails@example.com',
+            'password' => Hash::make('password123'),
+            'plan' => 'free',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('verification.send'));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('warning');
     }
 
     public function test_user_can_verify_email_from_signed_link_and_is_redirected_to_onboarding(): void

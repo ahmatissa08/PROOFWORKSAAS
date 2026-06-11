@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\VerificationEmailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,7 @@ class RegisterController extends Controller
         return view('auth.register');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, VerificationEmailService $verificationEmail)
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -37,7 +38,7 @@ class RegisterController extends Controller
         Auth::login($user);
 
         try {
-            $user->sendEmailVerificationNotification();
+            $verificationEmail->send($user);
         } catch (Throwable $e) {
             report($e);
 
