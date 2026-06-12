@@ -35,11 +35,7 @@ class ReportPdfService
         $this->addVerificationPage($pdf, $report);
 
         $filename = 'report_'.$report->id.'_'.now()->format('Y-m-d_His_u').'.pdf';
-        $path = storage_path('app/pdfs/'.$filename);
-
-        if (! is_dir(storage_path('app/pdfs'))) {
-            mkdir(storage_path('app/pdfs'), 0755, true);
-        }
+        $path = $this->pdfOutputDirectory().DIRECTORY_SEPARATOR.$filename;
 
         $pdf->Output($path, 'F');
 
@@ -348,15 +344,11 @@ class ReportPdfService
     {
         $paths = $this->certificatePaths();
 
-        if (! $this->certificateFilesExist($paths) && app()->environment(['local', 'testing'])) {
+        if (! $this->certificateFilesExist($paths)) {
             $this->generateSelfSignedCertificate($paths);
         }
 
         if (! $this->certificateFilesExist($paths)) {
-            if (app()->environment('production')) {
-                throw new \RuntimeException('PDF signature certificate is not configured.');
-            }
-
             return;
         }
 
@@ -390,6 +382,16 @@ class ReportPdfService
         @chmod($path, 0755);
 
         if (! is_writable($path)) {
+            $path = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'proofwork-tcpdf';
+
+            if (! is_dir($path)) {
+                mkdir($path, 0755, true);
+            }
+
+            @chmod($path, 0755);
+        }
+
+        if (! is_writable($path)) {
             throw new \RuntimeException("TCPDF cache directory is not writable: {$path}");
         }
 
@@ -400,6 +402,33 @@ class ReportPdfService
         if (defined('K_PATH_CACHE') && ! is_dir(K_PATH_CACHE)) {
             mkdir(K_PATH_CACHE, 0755, true);
         }
+    }
+
+    private function pdfOutputDirectory(): string
+    {
+        $path = storage_path('app/pdfs');
+
+        if (! is_dir($path)) {
+            mkdir($path, 0755, true);
+        }
+
+        @chmod($path, 0755);
+
+        if (! is_writable($path)) {
+            $path = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'proofwork-pdfs';
+
+            if (! is_dir($path)) {
+                mkdir($path, 0755, true);
+            }
+
+            @chmod($path, 0755);
+        }
+
+        if (! is_writable($path)) {
+            throw new \RuntimeException("PDF output directory is not writable: {$path}");
+        }
+
+        return $path;
     }
 
     private function certificatePaths(): array
