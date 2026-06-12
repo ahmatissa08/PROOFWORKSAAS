@@ -117,6 +117,39 @@ class AuthFlowTest extends TestCase
             && $request['to'] === ['resend-verification@example.com']);
     }
 
+    public function test_user_can_resend_verification_email_via_gmail_api(): void
+    {
+        config([
+            'services.verification_email.provider' => 'gmail_api',
+            'services.gmail_api.client_id' => 'test-client-id',
+            'services.gmail_api.client_secret' => 'test-client-secret',
+            'services.gmail_api.refresh_token' => 'test-refresh-token',
+            'services.gmail_api.from' => 'ProofWork <hello@gmail.com>',
+        ]);
+
+        Http::fake([
+            'https://oauth2.googleapis.com/token' => Http::response(['access_token' => 'test-access-token'], 200),
+            'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' => Http::response(['id' => 'gmail_message'], 200),
+        ]);
+
+        $user = User::create([
+            'name' => 'Needs Verification',
+            'email' => 'gmail-verification@example.com',
+            'password' => Hash::make('password123'),
+            'plan' => 'free',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('verification.send'));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('status', 'verification-link-sent');
+        Http::assertSent(fn ($request) => $request->url() === 'https://oauth2.googleapis.com/token'
+            && $request['grant_type'] === 'refresh_token');
+        Http::assertSent(fn ($request) => $request->url() === 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
+            && $request->hasHeader('Authorization', 'Bearer test-access-token')
+            && filled($request['raw']));
+    }
+
     public function test_resend_verification_shows_warning_when_email_provider_fails(): void
     {
         config([

@@ -20,6 +20,18 @@ return [
         'timeout' => env('RESEND_TIMEOUT', 15),
     ],
 
+    'verification_email' => [
+        'provider' => env('VERIFICATION_EMAIL_PROVIDER', 'resend'),
+    ],
+
+    'gmail_api' => [
+        'client_id' => env('GMAIL_API_CLIENT_ID'),
+        'client_secret' => env('GMAIL_API_CLIENT_SECRET'),
+        'refresh_token' => env('GMAIL_API_REFRESH_TOKEN'),
+        'from' => env('GMAIL_API_FROM_ADDRESS', env('MAIL_FROM_ADDRESS')),
+        'timeout' => env('GMAIL_API_TIMEOUT', 15),
+    ],
+
     'linear' => [
         'client_id' => env('LINEAR_CLIENT_ID'),
         'client_secret' => env('LINEAR_CLIENT_SECRET'),
