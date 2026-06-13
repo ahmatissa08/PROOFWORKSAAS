@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
-use App\Mail\ReportSharedMail;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\ReportEntry;
 use App\Services\AiSummaryService;
+use App\Services\GmailApiEmailService;
 use App\Services\ReportGeneratorService;
 use App\Services\ReportPdfService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class ReportController extends Controller
@@ -21,6 +20,7 @@ class ReportController extends Controller
         protected ReportGeneratorService $generator,
         protected AiSummaryService $ai,
         protected ReportPdfService $pdf,
+        protected GmailApiEmailService $emailService,
     ) {}
 
     public function index()
@@ -146,8 +146,14 @@ class ReportController extends Controller
         }
 
         try {
-            Mail::to($report->client->email)
-                ->send(new ReportSharedMail($report));
+            $report->loadMissing(['user', 'client', 'entries']);
+
+            $this->emailService->send(
+                $report->client->email,
+                "Your weekly update from {$report->user->name} - {$report->periodLabel()}",
+                view('emails.report-shared', compact('report'))->render(),
+                "Your proof of work report is ready:\n\n{$report->shareUrl()}"
+            );
         } catch (Throwable $e) {
             report($e);
 

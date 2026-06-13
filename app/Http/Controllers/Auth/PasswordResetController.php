@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\GmailApiEmailService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Throwable;
@@ -20,12 +23,34 @@ class PasswordResetController extends Controller
     }
 
     // Send reset link
-    public function sendLink(Request $request)
+    public function sendLink(Request $request, GmailApiEmailService $emailService)
     {
         $request->validate(['email' => ['required', 'email']]);
 
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user) {
+            return back()->withErrors(['email' => __(Password::INVALID_USER)]);
+        }
+
         try {
-            $status = Password::sendResetLink($request->only('email'));
+            $token = Password::broker()->createToken($user);
+            $url = URL::route('password.reset', [
+                'token' => $token,
+                'email' => $user->email,
+            ]);
+
+            $html = view('emails.password-reset', [
+                'user' => $user,
+                'url' => $url,
+            ])->render();
+
+            $emailService->send(
+                $user->email,
+                'Reset your ProofWork password',
+                $html,
+                "Reset your ProofWork password:\n\n{$url}\n\nThis link expires soon."
+            );
         } catch (Throwable $e) {
             report($e);
 
@@ -34,9 +59,7 @@ class PasswordResetController extends Controller
             ]);
         }
 
-        return $status === Password::RESET_LINK_SENT
-            ? back()->with('status', __($status))
-            : back()->withErrors(['email' => __($status)]);
+        return back()->with('status', __(Password::RESET_LINK_SENT));
     }
 
     // Show reset form

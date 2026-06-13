@@ -2,14 +2,13 @@
 
 namespace App\Console\Commands;
 
-use App\Mail\ReportSharedMail;
 use App\Models\Project;
 use App\Services\AiSummaryService;
+use App\Services\GmailApiEmailService;
 use App\Services\ReportGeneratorService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class GenerateWeeklyReports extends Command
 {
@@ -19,7 +18,8 @@ class GenerateWeeklyReports extends Command
 
     public function handle(
         ReportGeneratorService $generator,
-        AiSummaryService $ai
+        AiSummaryService $ai,
+        GmailApiEmailService $emailService
     ): int {
         $today = now()->dayOfWeekIso; // 1=Mon...7=Sun
         $dayNames = ['', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -58,7 +58,13 @@ class GenerateWeeklyReports extends Command
 
                 // Auto-send to client
                 if ($project->auto_send && $project->client?->email && $project->user->isPro()) {
-                    Mail::to($project->client->email)->send(new ReportSharedMail($report));
+                    $report->loadMissing(['user', 'client', 'entries']);
+                    $emailService->send(
+                        $project->client->email,
+                        "Your weekly update from {$report->user->name} - {$report->periodLabel()}",
+                        view('emails.report-shared', compact('report'))->render(),
+                        "Your proof of work report is ready:\n\n{$report->shareUrl()}"
+                    );
                     $report->update(['status' => 'sent', 'sent_at' => now()]);
                     $this->line("  → Sent to {$project->client->email}");
                 }

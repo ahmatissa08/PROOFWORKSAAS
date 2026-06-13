@@ -2,14 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Mail\ReportSharedMail;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class WorkspaceFlowTest extends TestCase
@@ -18,7 +17,17 @@ class WorkspaceFlowTest extends TestCase
 
     public function test_verified_user_can_manage_clients_projects_reports_and_settings(): void
     {
-        Mail::fake();
+        config([
+            'services.gmail_api.client_id' => 'test-client-id',
+            'services.gmail_api.client_secret' => 'test-client-secret',
+            'services.gmail_api.refresh_token' => 'test-refresh-token',
+            'services.gmail_api.from' => 'ProofWork <hello@gmail.com>',
+        ]);
+
+        Http::fake([
+            'https://oauth2.googleapis.com/token' => Http::response(['access_token' => 'test-access-token'], 200),
+            'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' => Http::response(['id' => 'gmail-message'], 200),
+        ]);
 
         $user = $this->verifiedUser();
 
@@ -173,7 +182,9 @@ class WorkspaceFlowTest extends TestCase
             ->post(route('reports.send', $report))
             ->assertRedirect();
 
-        Mail::assertSent(ReportSharedMail::class);
+        Http::assertSent(fn ($request) => $request->url() === 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
+            && $request->hasHeader('Authorization', 'Bearer test-access-token')
+            && filled($request['raw']));
 
         $report->refresh();
         $this->assertSame('sent', $report->status);

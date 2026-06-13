@@ -14,13 +14,13 @@ use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\DemoController;
 use App\Http\Middleware\AdminMiddleware;
+use App\Services\GmailApiEmailService;
 use App\Services\VerificationEmailService;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 // ═══════════════════════════════════════════════════════════════
@@ -59,7 +59,7 @@ Route::post('/stripe/webhook', [BillingController::class, 'webhook'])
     ->name('stripe.webhook');
 
 // Contact form
-Route::post('/contact', function (Request $request) {
+Route::post('/contact', function (Request $request, GmailApiEmailService $emailService) {
     $validated = $request->validate([
         'name' => 'required|string|max:120',
         'email' => 'required|email|max:255',
@@ -84,11 +84,15 @@ Route::post('/contact', function (Request $request) {
             $validated['message'],
         ];
 
+        $body = implode("\n", $bodyLines);
+
         try {
-            Mail::raw(implode("\n", $bodyLines), function ($mail) use ($to, $validated) {
-                $mail->to($to)
-                    ->subject('[ProofWork contact] '.$validated['subject']);
-            });
+            $emailService->send(
+                $to,
+                '[ProofWork contact] '.$validated['subject'],
+                '<pre style="font-family:Arial,sans-serif;white-space:pre-wrap">'.e($body).'</pre>',
+                $body
+            );
         } catch (\Throwable $e) {
             report($e);
         }

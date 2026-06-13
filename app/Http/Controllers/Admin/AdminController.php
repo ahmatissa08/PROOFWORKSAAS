@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Mail\BroadcastMail;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\User;
+use App\Services\GmailApiEmailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
@@ -122,7 +121,7 @@ class AdminController extends Controller
         return view('admin.broadcast', compact('count'));
     }
 
-    public function broadcastSend(Request $request)
+    public function broadcastSend(Request $request, GmailApiEmailService $emailService)
     {
         $request->validate([
             'subject' => ['required', 'string', 'max:200'],
@@ -141,11 +140,16 @@ class AdminController extends Controller
 
         foreach ($users as $user) {
             try {
-                Mail::to($user->email)->send(new BroadcastMail(
-                    broadcastSubject: $request->subject,
-                    broadcastBody: $request->body,
-                    recipientName: $user->name,
-                ));
+                $emailService->send(
+                    $user->email,
+                    $request->subject,
+                    view('emails.broadcast', [
+                        'broadcastSubject' => $request->subject,
+                        'broadcastBody' => $request->body,
+                        'recipientName' => $user->name,
+                    ])->render(),
+                    $request->body
+                );
                 $sent++;
             } catch (\Throwable $e) {
                 Log::error("Admin broadcast failed for {$user->email}: ".$e->getMessage());
